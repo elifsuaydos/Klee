@@ -24,6 +24,18 @@ import { useGSAP } from "@gsap/react";
 //     import guard in ScrollTrigger itself handles the window check) ─────────
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
+function SplitTextChars({ text }) {
+  return (
+    <>
+      {text.split("").map((char, i) => (
+        <span key={i} className="char" style={{ display: "inline-block", opacity: 0, transform: "translateY(40px)", willChange: "transform, opacity" }}>
+          {char === " " ? "\u00A0" : char}
+        </span>
+      ))}
+    </>
+  );
+}
+
 // ─── Brand palette ────────────────────────────────────────────────────────────
 const BRAND_COLORS = ["#D14C18", "#F4D68C", "#7C9DD2", "#B2AB2B"];
 
@@ -66,6 +78,12 @@ export default function KleeHeroAnimation() {
   const petalBRef = useRef(null); // Yellow     – flies off top-right
   const petalCRef = useRef(null); // Blue       – flies off bottom-left
   const petalDRef = useRef(null); // Green      – the survivor
+
+  const text1Ref = useRef(null); // Green Text
+  const text2Ref = useRef(null); // Blue Text
+  const text3Ref = useRef(null); // Red Text
+  const text4Ref = useRef(null); // Yellow Text
+  const finalContentRef = useRef(null); // Final content container
 
   // ─── GSAP animation ────────────────────────────────────────────────────────
   useGSAP(
@@ -113,6 +131,8 @@ export default function KleeHeroAnimation() {
         },
         "phase1"
       );
+      master.to(text1Ref.current.querySelectorAll(".char"), { opacity: 1, y: 0, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.out" }, "phase1+=0.25");
+      master.to(text1Ref.current.querySelector(".description"), { opacity: 1, y: 0, duration: 0.15, ease: "power2.out" }, "phase1+=0.25");
 
       // (Fade out removed to keep all petals visible)
 
@@ -128,6 +148,10 @@ export default function KleeHeroAnimation() {
         },
         "phase2"
       );
+      master.to(text1Ref.current.querySelectorAll(".char"), { opacity: 0, y: -40, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.in" }, "phase2");
+      master.to(text1Ref.current.querySelector(".description"), { opacity: 0, y: -20, duration: 0.15, ease: "power2.in" }, "phase2");
+      master.to(text2Ref.current.querySelectorAll(".char"), { opacity: 1, y: 0, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.out" }, "phase2+=0.25");
+      master.to(text2Ref.current.querySelector(".description"), { opacity: 1, y: 0, duration: 0.15, ease: "power2.out" }, "phase2+=0.25");
 
       // ── Phase 3: Top Left to Top Right ─────────────────────────────────
       // Slide horizontally (keep rotation at 270).
@@ -142,6 +166,10 @@ export default function KleeHeroAnimation() {
         },
         "phase3"
       );
+      master.to(text2Ref.current.querySelectorAll(".char"), { opacity: 0, y: -40, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.in" }, "phase3");
+      master.to(text2Ref.current.querySelector(".description"), { opacity: 0, y: -20, duration: 0.15, ease: "power2.in" }, "phase3");
+      master.to(text3Ref.current.querySelectorAll(".char"), { opacity: 1, y: 0, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.out" }, "phase3+=0.25");
+      master.to(text3Ref.current.querySelector(".description"), { opacity: 1, y: 0, duration: 0.15, ease: "power2.out" }, "phase3+=0.25");
 
       // ── Phase 4: Top Right to Bottom Left ──────────────────────────────
       // Turn 90 degrees (270 + 90 = 360) to reveal the Yellow petal.
@@ -155,6 +183,10 @@ export default function KleeHeroAnimation() {
         },
         "phase4"
       );
+      master.to(text3Ref.current.querySelectorAll(".char"), { opacity: 0, y: -40, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.in" }, "phase4");
+      master.to(text3Ref.current.querySelector(".description"), { opacity: 0, y: -20, duration: 0.15, ease: "power2.in" }, "phase4");
+      master.to(text4Ref.current.querySelectorAll(".char"), { opacity: 1, y: 0, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.out" }, "phase4+=0.25");
+      master.to(text4Ref.current.querySelector(".description"), { opacity: 1, y: 0, duration: 0.15, ease: "power2.out" }, "phase4+=0.25");
 
       // ── Phase 5: Fly to Navbar & Shrink ────────────────────────────────
       master.to(
@@ -177,6 +209,13 @@ export default function KleeHeroAnimation() {
           ease: "power2.inOut",
         },
         "phase5"
+      );
+      master.to(text4Ref.current.querySelectorAll(".char"), { opacity: 0, y: -40, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.in" }, "phase5");
+      master.to(text4Ref.current.querySelector(".description"), { opacity: 0, y: -20, duration: 0.15, ease: "power2.in" }, "phase5");
+      master.fromTo(finalContentRef.current, 
+        { opacity: 0, y: 40 }, 
+        { opacity: 1, y: 0, ease: "power2.out" }, 
+        "phase5+=0.1" // slightly after it starts shrinking
       );
 
       // ── Phase 6: Seamless Handoff ──────────────────────────────────────
@@ -209,6 +248,89 @@ export default function KleeHeroAnimation() {
       }}
       aria-label="Klee animated hero"
     >
+      <div 
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: 10,
+          pointerEvents: "none",
+          overflow: "hidden"
+        }}
+      >
+        {/* Phase 1: Green */}
+        <div ref={text1Ref} style={{ position: "absolute", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <h2 style={{ whiteSpace: "nowrap", fontSize: "clamp(6rem, 18vw, 20rem)", fontWeight: "900", color: "#0f172a", margin: 0, lineHeight: 1, letterSpacing: "-0.04em", opacity: 0.9 }}>
+            <SplitTextChars text="TILSIMTILSIMTILSIMTILSIMTILSIMTILSIM" />
+          </h2>
+          <div className="description" style={{ opacity: 0, transform: "translateY(20px)", position: "absolute", bottom: "15vh", right: "5vw", maxWidth: "360px", textAlign: "right", fontSize: "1.4rem", fontWeight: "400", color: "#0f172a", lineHeight: 1.4 }}>
+            Klee ile çalışanların yakalayacağı o eşsiz dijital başarı şansı.
+          </div>
+        </div>
+
+        {/* Phase 2: Blue */}
+        <div ref={text2Ref} style={{ position: "absolute", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <h2 style={{ whiteSpace: "nowrap", fontSize: "clamp(6rem, 18vw, 20rem)", fontWeight: "900", color: "#0f172a", margin: 0, lineHeight: 1, letterSpacing: "-0.04em", opacity: 0.9 }}>
+            <SplitTextChars text="VİZYONVİZYONVİZYONVİZYONVİZYONVİZYON" />
+          </h2>
+          <div className="description" style={{ opacity: 0, transform: "translateY(20px)", position: "absolute", bottom: "15vh", right: "5vw", maxWidth: "360px", textAlign: "right", fontSize: "1.4rem", fontWeight: "400", color: "#0f172a", lineHeight: 1.4 }}>
+            Müşterinin hayali ve Klee&apos;nin tasarım gücü.
+          </div>
+        </div>
+
+        {/* Phase 3: Red */}
+        <div ref={text3Ref} style={{ position: "absolute", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <h2 style={{ whiteSpace: "nowrap", fontSize: "clamp(6rem, 18vw, 20rem)", fontWeight: "900", color: "#0f172a", margin: 0, lineHeight: 1, letterSpacing: "-0.04em", opacity: 0.9 }}>
+            <SplitTextChars text="TUTKUTUTKUTUTKUTUTKUTUTKUTUTKUTUTKU" />
+          </h2>
+          <div className="description" style={{ opacity: 0, transform: "translateY(20px)", position: "absolute", bottom: "15vh", right: "5vw", maxWidth: "360px", textAlign: "right", fontSize: "1.4rem", fontWeight: "400", color: "#0f172a", lineHeight: 1.4 }}>
+            Kodlamaya ve detaylara verilen önem.
+          </div>
+        </div>
+
+        {/* Phase 4: Yellow */}
+        <div ref={text4Ref} style={{ position: "absolute", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <h2 style={{ whiteSpace: "nowrap", fontSize: "clamp(6rem, 18vw, 20rem)", fontWeight: "900", color: "#0f172a", margin: 0, lineHeight: 1, letterSpacing: "-0.04em", opacity: 0.9 }}>
+            <SplitTextChars text="KIVILCIMKIVILCIMKIVILCIMKIVILCIMKIVILCIM" />
+          </h2>
+          <div className="description" style={{ opacity: 0, transform: "translateY(20px)", position: "absolute", bottom: "15vh", right: "5vw", maxWidth: "360px", textAlign: "right", fontSize: "1.4rem", fontWeight: "400", color: "#0f172a", lineHeight: 1.4 }}>
+            İnovasyon, farklı olma, yeni fikirler üretme.
+          </div>
+        </div>
+      </div>
+
+      {/* FINAL CONTENT (appears when clover shrinks) */}
+      <div 
+        ref={finalContentRef}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "4vw",
+          padding: "0 8vw",
+          opacity: 0,
+          zIndex: 5
+        }}
+      >
+        {/* Left: Photo Box */}
+        <div style={{ flex: 1, height: "60vh", background: "var(--gray-100)", borderRadius: "24px", overflow: "hidden", position: "relative", boxShadow: "var(--shadow-xl)" }}>
+          <img src="/project-1.png" alt="Klee Team" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+        
+        {/* Right: Text */}
+        <div style={{ flex: 1, textAlign: "left" }}>
+          <h1 style={{ fontSize: "clamp(3rem, 6vw, 5rem)", fontWeight: "900", color: "#0f172a", lineHeight: 1.1, letterSpacing: "-0.03em" }}>
+            Dijital <br/> deneyimler <br/> tasarlıyoruz.
+          </h1>
+        </div>
+      </div>
       {/*
         ── Klee Four-Leaf Clover SVG ───────────────────────────────────────
         Geometrically optimized heart-shaped petals.

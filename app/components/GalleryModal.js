@@ -3,7 +3,12 @@
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 
-export default function GalleryModal({ isOpen, images, initialIndex, onClose }) {
+export default function GalleryModal({
+  isOpen,
+  images,
+  initialIndex,
+  onClose,
+}) {
   const scrollContainerRef = useRef(null);
 
   const scrollToIndex = (index) => {
@@ -62,22 +67,64 @@ export default function GalleryModal({ isOpen, images, initialIndex, onClose }) 
 
   return (
     <div className="gallery-modal-overlay">
-      <button className="gallery-nav gallery-nav-left" onClick={handlePrev} aria-label="Previous image">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+      <button
+        className="gallery-nav gallery-nav-left"
+        onClick={handlePrev}
+        aria-label="Previous image"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15.75 19.5L8.25 12l7.5-7.5"
+          />
         </svg>
       </button>
-      <button className="gallery-nav gallery-nav-right" onClick={handleNext} aria-label="Next image">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5L15.75 12l-7.5 7.5" />
+      <button
+        className="gallery-nav gallery-nav-right"
+        onClick={handleNext}
+        aria-label="Next image"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M8.25 4.5L15.75 12l-7.5 7.5"
+          />
         </svg>
       </button>
-      <button className="gallery-modal-close" onClick={onClose} aria-label="Close Gallery">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      <button
+        className="gallery-modal-close"
+        onClick={onClose}
+        aria-label="Close Gallery"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
-      
+
       <div className="gallery-modal-scroll" ref={scrollContainerRef}>
         {images.map((img, idx) => (
           <div key={idx} className="gallery-modal-slide">
