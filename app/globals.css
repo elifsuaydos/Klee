@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 /* ========================================
    CSS VARIABLES / DESIGN TOKENS
@@ -36,6 +36,7 @@
 
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Spacing */
   --section-padding: 120px 0;
@@ -84,6 +85,49 @@ body {
   color: var(--gray-900);
   line-height: 1.6;
   overflow-x: hidden;
+}
+
+/* ========================================
+   FILM GRAIN OVERLAY
+   ======================================== */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  animation: grain 0.4s steps(1) infinite;
+}
+
+@keyframes grain {
+  0%   { background-position: 0 0; }
+  10%  { background-position: -5% -10%; }
+  20%  { background-position: -15% 5%; }
+  30%  { background-position: 7% -25%; }
+  40%  { background-position: -5% 25%; }
+  50%  { background-position: -15% 10%; }
+  60%  { background-position: 15% 0%; }
+  70%  { background-position: 0% 15%; }
+  80%  { background-position: 3% 35%; }
+  90%  { background-position: -10% 10%; }
+  100% { background-position: 0 0; }
+}
+
+/* Text selection highlight */
+::selection {
+  background: var(--olive-green);
+  color: #ffffff;
+}
+::-moz-selection {
+  background: var(--olive-green);
+  color: #ffffff;
 }
 
 a {
@@ -148,15 +192,18 @@ button {
 }
 
 .navbar-brand {
+  font-family: var(--font-heading);
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--gray-900);
-  transition: var(--transition-fast);
+  transition: transform var(--transition-fast);
+  display: inline-block;
 }
 
 .navbar-brand:hover {
-  color: var(--olive-green);
+  color: var(--gray-900);
+  transform: scale(1.08);
 }
 
 .navbar-links {
@@ -170,9 +217,10 @@ button {
   font-weight: 600;
   letter-spacing: 0.1em;
   color: var(--gray-500);
-  transition: var(--transition-fast);
+  transition: transform var(--transition-fast);
   position: relative;
   padding: 4px 0;
+  display: inline-block;
 }
 
 .navbar-link::after {
@@ -182,13 +230,14 @@ button {
   left: 0;
   width: 0;
   height: 2px;
-  background: var(--olive-green);
-  transition: var(--transition-base);
+  background: #000000;
+  transition: width var(--transition-base);
   border-radius: 1px;
 }
 
 .navbar-link:hover {
-  color: var(--gray-900);
+  color: var(--gray-500);
+  transform: scale(1.08);
 }
 
 .navbar-link:hover::after {
@@ -272,8 +321,28 @@ button {
    PROJECTS SECTION
    ======================================== */
 .projects {
-  background: var(--gray-50);
+  background: #ffffff;
   padding: var(--section-padding);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Four-leaf clover SVG pattern behind the projects grid */
+.projects-clover-bg {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+}
+
+.projects .container {
+  position: relative;
+  z-index: 1;
 }
 
 .projects-header {
@@ -282,9 +351,10 @@ button {
 }
 
 .projects-title {
+  font-family: var(--font-heading);
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
-  color: var(--gray-900);
+  color: #ffffff;
   letter-spacing: -0.03em;
   margin-bottom: 16px;
   line-height: 1.2;
@@ -292,7 +362,8 @@ button {
 
 .projects-description {
   font-size: 1.1rem;
-  color: var(--gray-500);
+  color: #ffffff;
+  opacity: 0.75;
   max-width: 520px;
   margin: 0 auto;
   line-height: 1.7;
@@ -319,7 +390,7 @@ button {
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.08em;
-  color: var(--gray-400);
+  color: rgba(255, 255, 255, 0.45);
   background: none;
   border: none;
   padding: 0;
@@ -329,11 +400,11 @@ button {
 }
 
 .project-tab:hover {
-  color: var(--gray-700);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .project-tab.active {
-  color: var(--olive-green);
+  color: #ffffff;
 }
 
 /* Project Grid - Bento Style */
@@ -418,7 +489,7 @@ button {
   width: 100%;
   aspect-ratio: 16 / 10;
   overflow: hidden;
-  background: var(--gray-50);
+  background: #ffffff;
   position: relative;
 }
 
@@ -498,6 +569,7 @@ button {
 }
 
 .contact-header-title {
+  font-family: var(--font-heading);
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
   color: var(--gray-900);
@@ -787,6 +859,7 @@ button {
 /* Keyword text (TILSIM / VİZYON / TUTKU / KIVILCIM) */
 .hero-keyword {
   position: absolute;
+  font-family: var(--font-heading);
   font-size: clamp(3rem, 14vw, 18rem);
   font-weight: 900;
   color: #0f172a;
@@ -794,6 +867,72 @@ button {
   line-height: 1;
   letter-spacing: -0.04em;
   white-space: nowrap;
+}
+
+/* ========================================
+   HERO INTRO SCREEN
+   ======================================== */
+.hero-intro-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+
+.hero-intro-text {
+  font-family: var(--font-heading);
+  font-size: clamp(2.2rem, 7vw, 5rem);
+  font-weight: 800;
+  color: var(--gray-900);
+  letter-spacing: -0.03em;
+  text-align: center;
+  line-height: 1.15;
+  max-width: 900px;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Scroll prompt bounce */
+.scroll-prompt {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 25;
+  animation: scrollBounce 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.scroll-prompt-text {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  opacity: 0.7;
+}
+
+.scroll-prompt-arrow {
+  width: 20px;
+  height: 20px;
+  color: var(--gray-400);
+  opacity: 0.7;
+}
+
+@keyframes scrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.6; }
+  50%       { transform: translateX(-50%) translateY(8px); opacity: 1; }
 }
 
 /* Landscape mobile: height-based sizing */

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 
 import Image from "next/image";
 import KleeHeroAnimation from "./components/KleeHeroAnimation";
-import ScrambleText from "./components/ScrambleText";
+import { RandomLetterSwapPingPong, RandomLetterSwapForward } from "./components/RandomLetterSwap";
 import GalleryModal from "./components/GalleryModal";
 
 /* ================================================
@@ -256,6 +256,22 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
+const PhoneIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
+    />
+  </svg>
+);
+
 /* ================================================
    NAVBAR COMPONENT
    ================================================ */
@@ -394,6 +410,26 @@ function ProjectsSection() {
 
   return (
     <section className="projects" id="projects">
+      {/* Clover-shaped dark background — matches the attached concave shape */}
+      <svg
+        className="projects-clover-bg"
+        viewBox="0 0 200 140"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+        width="100%"
+        height="100%"
+        aria-hidden="true"
+      >
+        <path
+          d="M 30 0 L 170 0 Q 200 0 200 30 L 200 110 Q 200 140 170 140 L 30 140 Q 0 140 0 110 L 0 30 Q 0 0 30 0 Z
+             M 0 70 Q 30 50 30 0 L 0 0 Z
+             M 200 70 Q 170 50 170 0 L 200 0 Z
+             M 0 70 Q 30 90 30 140 L 0 140 Z
+             M 200 70 Q 170 90 170 140 L 200 140 Z"
+          fill="#000000"
+          fillRule="evenodd"
+        />
+      </svg>
       <div className="container">
         <div className="projects-header fade-in-up">
           <h2 className="projects-title">Seçilmiş Çalışmalar</h2>
@@ -410,7 +446,7 @@ function ProjectsSection() {
                 className={`project-tab ${activeTab === tab ? "active" : ""}`}
                 onClick={() => handleTabChange(tab)}
               >
-                <ScrambleText text={tab} speed={30} hoverOnly={true} />
+                <RandomLetterSwapPingPong label={tab} staggerDuration={0.02} />
               </button>
               {index < PROJECT_TABS.length - 1 && (
                 <span className="project-tab-spacer" aria-hidden="true" />
@@ -442,11 +478,7 @@ function ProjectsSection() {
               {project.title === "Luxe Commerce" && (
                 <div className="project-card-content">
                   <h3 className="project-card-title">
-                    <ScrambleText
-                      text={project.title}
-                      speed={40}
-                      delay={index * 100}
-                    />
+                    <RandomLetterSwapForward label={project.title} staggerDuration={0.015} />
                   </h3>
                   <p className="project-card-desc">{project.desc}</p>
                 </div>
@@ -499,6 +531,16 @@ function ContactSection() {
 
               <div className="contact-info-item">
                 <div className="contact-info-icon">
+                  <PhoneIcon />
+                </div>
+                <div>
+                  <div className="contact-info-label">Telefon</div>
+                  <div className="contact-info-value">+90 00000000</div>
+                </div>
+              </div>
+
+              <div className="contact-info-item">
+                <div className="contact-info-icon">
                   <LocationIcon />
                 </div>
                 <div>
@@ -517,10 +559,9 @@ function ContactSection() {
               rel="noopener noreferrer"
               className="contact-cta"
             >
-              <ScrambleText
-                text="WHATSAPP'TAN İLETİŞİME GEÇİN"
-                speed={40}
-                hoverOnly={true}
+              <RandomLetterSwapPingPong
+                label="WHATSAPP'TAN İLETİŞİME GEÇİN"
+                staggerDuration={0.012}
               />
             </a>
           </div>

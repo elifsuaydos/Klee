@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import { CardContainer, CardBody, CardItem } from "./Card3D";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -31,6 +32,109 @@ function SplitTextChars({ text }) {
 const PETAL_PATH =
   "M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z";
 
+/* ──────────────────────────────────────────────────────
+   Cycling word — all words always in DOM, GSAP coordinates
+   entrance (slide + blur in) and exit (slide + blur out)
+────────────────────────────────────────────────────── */
+const CYCLE_WORDS = ["deneyimler", "websiteleri", "hayalleri", "projeleri"];
+
+function CyclingWord() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const wordRefs = useRef([]);
+  const indexRef = useRef(0);
+  const isAnimating = useRef(false);
+
+  // Set initial state: first word visible, rest hidden below
+  useEffect(() => {
+    CYCLE_WORDS.forEach((_, i) => {
+      const el = wordRefs.current[i];
+      if (!el) return;
+      if (i === 0) {
+        gsap.set(el, { y: "0%", opacity: 1, filter: "blur(0px)", scale: 1 });
+      } else {
+        gsap.set(el, { y: "60%", opacity: 0, filter: "blur(8px)", scale: 0.92 });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (isAnimating.current) return;
+      isAnimating.current = true;
+
+      const current = indexRef.current;
+      const next = (current + 1) % CYCLE_WORDS.length;
+
+      const currentEl = wordRefs.current[current];
+      const nextEl = wordRefs.current[next];
+      if (!currentEl || !nextEl) { isAnimating.current = false; return; }
+
+      // Prep next word below
+      gsap.set(nextEl, { y: "60%", opacity: 0, filter: "blur(8px)", scale: 0.92 });
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          indexRef.current = next;
+          setActiveIndex(next);
+          isAnimating.current = false;
+        },
+      });
+
+      // Exit: current word slides up and blurs out
+      tl.to(currentEl, {
+        y: "-60%",
+        opacity: 0,
+        filter: "blur(8px)",
+        scale: 0.92,
+        duration: 0.5,
+        ease: "power3.in",
+      });
+
+      // Enter: next word slides up into place, clears blur
+      tl.to(nextEl, {
+        y: "0%",
+        opacity: 1,
+        filter: "blur(0px)",
+        scale: 1,
+        duration: 0.6,
+        ease: "power3.out",
+      }, "-=0.15"); // slight overlap for snappiness
+    }, 2400);
+
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <span
+      style={{
+        position: "relative",
+        display: "inline-block",
+        overflow: "hidden",
+        verticalAlign: "bottom",
+        /* Match longest word so layout doesn't jump */
+        minWidth: `${Math.max(...CYCLE_WORDS.map(w => w.length))}ch`,
+      }}
+    >
+      {CYCLE_WORDS.map((word, i) => (
+        <span
+          key={word}
+          ref={el => { wordRefs.current[i] = el; }}
+          style={{
+            position: i === 0 ? "relative" : "absolute",
+            top: 0,
+            left: 0,
+            display: "inline-block",
+            whiteSpace: "nowrap",
+            willChange: "transform, opacity, filter",
+          }}
+        >
+          {word}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 const CLOVER_STYLE = {
   position: "absolute",
   left: "50%",
@@ -43,6 +147,8 @@ const CLOVER_STYLE = {
 export default function KleeHeroAnimation() {
   const sectionRef = useRef(null);
   const cloverRef = useRef(null);
+  const introScreenRef = useRef(null);
+  const introTextRef = useRef(null);
 
   const step1Ref = useRef(null);
   const step2Ref = useRef(null);
@@ -59,17 +165,44 @@ export default function KleeHeroAnimation() {
     () => {
       const section = sectionRef.current;
       const clover = cloverRef.current;
+      const introScreen = introScreenRef.current;
 
       const navbar = document.querySelector("#navbar");
       if (navbar) {
         gsap.set(navbar, { opacity: 0, pointerEvents: "none" });
       }
 
-      gsap.set(clover, { scale: 0.18, x: 0, y: 0, opacity: 1, rotation: 0 });
-
       const isMobile = () => section.clientWidth < 768;
       const isLandscape = () =>
         section.clientWidth > section.clientHeight && section.clientHeight < 500;
+
+      // ── Intro scale: clover starts BIG and semi-transparent ──────
+      const introScale = () => {
+        if (isLandscape()) return 1.0;
+        return isMobile() ? 1.3 : 1.86;
+      };
+      gsap.set(clover, { scale: introScale(), x: 0, y: 0, opacity: 1, rotation: 0 });
+
+      // Independent idle spin (runs until first scroll)
+      const idleSpin = gsap.to(clover, {
+        rotation: "+=360",
+        duration: 18,
+        ease: "none",
+        repeat: -1,
+      });
+
+      // Animate intro text chars in on mount
+      const introChars = introTextRef.current?.querySelectorAll(".char");
+      if (introChars && introChars.length) {
+        gsap.to(introChars, {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          stagger: { amount: 0.6 },
+          ease: "power2.out",
+          delay: 0.3,
+        });
+      }
 
       const centerScale = () => {
         if (isLandscape()) return 1.2;
@@ -113,10 +246,22 @@ export default function KleeHeroAnimation() {
           scrub: 1,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            // Kill idle spin once scrolling begins
+            if (self.progress > 0.001 && idleSpin.isActive()) {
+              idleSpin.kill();
+            }
+            // Fade out intro screen (tagline + scroll prompt)
+            if (introScreen && self.progress > 0.001) {
+              gsap.to(introScreen, { opacity: 0, duration: 0.4, ease: "power2.out", overwrite: true });
+            } else if (introScreen && self.progress <= 0.001) {
+              gsap.to(introScreen, { opacity: 1, duration: 0.4, ease: "power2.out", overwrite: true });
+            }
+          },
         },
       });
 
-      // ── Phase 0: Grow at center (speed unchanged) ─────────────────────
+      // ── Phase 0: Transition from intro state → full-opacity center ─────
       master.to(clover, {
         scale: centerScale,
         duration: 0.8,
@@ -320,6 +465,27 @@ export default function KleeHeroAnimation() {
       }}
       aria-label="Klee animated hero"
     >
+      {/* ── Intro screen: tagline + scroll prompt (clover IS the GSAP clover below) */}
+      <div ref={introScreenRef} className="hero-intro-screen" aria-hidden="true">
+        <h2 ref={introTextRef} className="hero-intro-text">
+          <SplitTextChars text="Klee ile HAYALİNDEKİ WEBSİTENE kavuş" />
+        </h2>
+        <div className="scroll-prompt">
+          <span className="scroll-prompt-text">aşağı kaydır</span>
+          <svg
+            className="scroll-prompt-arrow"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
+        </div>
+      </div>
       {/* ── Single clover SVG (all petals as one unit) ──────────────── */}
       <svg
         ref={cloverRef}
@@ -422,16 +588,48 @@ export default function KleeHeroAnimation() {
         className="hero-final-content"
         style={{ opacity: 0 }}
       >
-        <div className="hero-final-image">
-          <img
-            src="/project-1.png"
-            alt="Klee Team"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        </div>
+        {/* 3D tilt card wrapping the project image */}
+        <CardContainer
+          containerStyle={{ flex: 1 }}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <CardBody style={{ width: "100%", height: "100%" }}>
+            <CardItem
+              translateZ={60}
+              style={{
+                width: "100%",
+                height: "60vh",
+                borderRadius: "24px",
+                overflow: "hidden",
+                boxShadow: "0 30px 80px rgba(0,0,0,0.18), 0 10px 30px rgba(0,0,0,0.10)",
+                display: "block",
+              }}
+            >
+              <img
+                src="/project-1.png"
+                alt="Klee Team"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            </CardItem>
+
+            {/* Floating glare layer */}
+            <CardItem
+              translateZ={80}
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "24px",
+                background: "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent 60%)",
+                pointerEvents: "none",
+              }}
+            />
+          </CardBody>
+        </CardContainer>
         <div className="hero-final-text">
           <h1 className="hero-final-heading">
-            Dijital <br /> deneyimler <br /> tasarlıyoruz.
+            Dijital <br />
+            <CyclingWord /> <br />
+            tasarlıyoruz.
           </h1>
         </div>
       </div>
