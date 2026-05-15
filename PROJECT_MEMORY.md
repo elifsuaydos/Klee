@@ -39,6 +39,8 @@
 | Framework | **Next.js 16.2.6** (App Router) | ⚠️ Eğitim verisindeki Next.js değil. `node_modules/next/dist/docs/` altındaki rehber okunmadan kod yazılmamalı (AGENTS.md uyarısı). |
 | UI | **React 19.2.4** | Server/Client Components. Sayfanın büyük kısmı `"use client"`. |
 | Animasyon | **GSAP 3.15.0** + `@gsap/react@2.1.2` (`useGSAP` hook) + **ScrollTrigger** | Master timeline, `pin: true`, `scrub: 1`. |
+| 3D (demo) | **Three.js** (latest) | Sadece `/horizon` route'unda kullanılıyor. Starfield + nebula + dağ silüeti + bloom post-processing. |
+| Smooth-scroll | **Lenis v1.x** | Tüm sayfalarda aktif, `/horizon`'da pathname-aware bypass ile devre dışı. |
 | Stil | Saf CSS — `app/globals.css` (1165 satır), CSS custom properties | Tailwind / CSS-in-JS yok. Inline style yalnızca dinamik konum/opaklık için. |
 | Tipografi | **Inter** (body) + **Outfit** (heading) — Google Fonts üzerinden `@import` | `--font-family` ve `--font-heading` token'ları. |
 | Görseller | `next/image` (project kartları, galeri) + raw `<img>` (hero final card içinde) | `next.config.mjs` boş; harici domain yok. |
@@ -55,6 +57,9 @@ Klee-main/
 │   ├── layout.js                 → RootLayout. <html lang="tr">. SEO metadata (title/description/OG, keywords).
 │   ├── page.js                   → Tüm landing page (639 satır). Navbar, ProjectsSection, ContactSection, Footer + tab/galeri state.
 │   ├── globals.css               → Tüm site stilleri + tasarım token'ları + responsive breakpoint'ler (1165 satır).
+│   ├── horizon/                  → Demo route (/horizon). Three.js cosmic hero. Anasayfayı ETKİLEMEZ.
+│   │   ├── page.js               → "use client", HorizonHeroSection bileşenini render eder.
+│   │   └── horizon.css           → Scoped CSS (.cosmos-style parent), globals.css ile çakışmaz.
 │   ├── page.module.css           → ⚠️ create-next-app artığı. ŞU AN KULLANILMIYOR (silinebilir).
 │   ├── favicon.ico
 │   └── components/
@@ -116,7 +121,16 @@ Klee-main/
 - `document.body.style.overflow = "hidden"` ile sayfa scroll lock.
 - ⚠️ **Eksik:** ESC tuşu, ok tuşu klavye navigasyonu, focus trap, `role="dialog"`, `aria-modal`, görsel başlık/desc.
 
-### 6. `ScrambleText` ([app/components/ScrambleText.js](app/components/ScrambleText.js))
+### 6. `HorizonHeroSection` ([app/components/HorizonHeroSection.jsx](app/components/HorizonHeroSection.jsx))
+- Three.js + GSAP tabanlı tam ekran cosmic hero. Sadece `/horizon` route'unda kullanılıyor (demo/test).
+- **Three.js scene:** 3×5000 yıldız (ShaderMaterial, paralaks rotasyon), shader nebula (PlaneGeometry), 4 katman dağ silüeti (ShapeGeometry), atmosfer küresi (BackSide sphere). Bloom post-processing (UnrealBloomPass, strength:0.8).
+- **Scroll kamera:** `window.scroll` listener ile `targetCameraX/Y/Z` set edilir, `animate()` döngüsü 0.05 smoothing ile takip eder. 3 pozisyon: HORIZON (z:300) → COSMOS (z:-50) → INFINITY (z:-700).
+- **GSAP intro:** `isReady` state'i Three.js init sonrasında `true` olur → menü/başlık/altyazı/scroll-progress animate-in.
+- **Bug fixes (orijinal koddan):** `splitTitle()` çağrısı eksikti → düzeltildi; `titleRef`/`subtitleRef` birden fazla elemana atanıyordu → scroll-section'lardan ref kaldırıldı.
+- **LenisProvider bypass:** `/horizon`'da Lenis devre dışı (native scroll gerekli). [LenisProvider.js](app/components/LenisProvider.js) `usePathname` ile kontrol eder.
+- **CSS:** `app/horizon/horizon.css` — tüm class'lar `.cosmos-style` parent altında scoped, globals.css ile çakışma yok.
+
+### 7. `ScrambleText` ([app/components/ScrambleText.js](app/components/ScrambleText.js))
 - ⚠️ **Şu an page.js'te kullanılmıyor.** Önceki sürümde sekme ve kart başlıklarında vardı, `RandomLetterSwap`'a geçildikten sonra import kaldırıldı. Component dosyası duruyor; gelecekte ihtiyaç olursa kullanılabilir veya silinebilir.
 
 ## 🎬 Hero Animasyonu — Adım Adım Zaman Çizelgesi
@@ -255,6 +269,14 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 ## 📌 Son Değişiklikler (Changelog)
 
 > Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
+
+- **[2026-05-16] /horizon route: Three.js Horizon Hero entegrasyonu (demo)**
+  - `npm install three` — Three.js eklendi (bundle sadece `/horizon` chunk'ına gider, anasayfa etkilenmez).
+  - **Yeni bileşen:** [HorizonHeroSection.jsx](app/components/HorizonHeroSection.jsx) — starfield + nebula + dağlar + atmosfer + bloom post-processing + scroll kamera.
+  - **Yeni route:** [app/horizon/page.js](app/horizon/page.js) + [app/horizon/horizon.css](app/horizon/horizon.css) (scoped `.cosmos-style`).
+  - **LenisProvider güncellendi:** `usePathname` ile `/horizon`'da Lenis bypass → native scroll aktif. [LenisProvider.js](app/components/LenisProvider.js).
+  - **Orijinal koddaki 2 bug düzeltildi:** (1) `splitTitle()` çağrılmıyordu → `.title-char` span'ları oluşmuyordu, GSAP animasyon broken. (2) `titleRef`/`subtitleRef` 3 elemana aynı anda atanıyordu → scroll-section ref'leri kaldırıldı.
+  - Mevcut Klee anasayfası (yonca hero, projeler, iletişim) **dokunulmadı**.
 
 - **[2026-05-16] Hero animasyonu smoothness: Lenis + easing + petal opacity + idle spin**
   - **Lenis smooth-scroll** entegrasyonu: [LenisProvider.js (NEW)](app/components/LenisProvider.js) oluşturuldu. Lenis v1.x → GSAP ticker proxy → tek RAF loop. `lagSmoothing(0)` kapatılarak Lenis + GSAP senkronizasyonu sağlandı. Scroll artık "tıkır tıkır" değil, flüid. Performans: Harici yük yok.

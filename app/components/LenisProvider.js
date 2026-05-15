@@ -2,13 +2,19 @@
 
 import Lenis from "lenis";
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function LenisProvider({ children }) {
+  const pathname = usePathname();
+
   useEffect(() => {
+    // Horizon sayfasında Lenis kapalı — bileşen kendi native scroll'unu kullanıyor
+    if (pathname.startsWith("/horizon")) return;
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -31,7 +37,7 @@ export default function LenisProvider({ children }) {
       lenis.destroy();
       gsap.ticker.remove(tick);
     };
-  }, []);
+  }, [pathname]);
 
   return children;
 }

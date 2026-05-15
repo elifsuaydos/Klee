@@ -1,0 +1,212 @@
+/* =====================================================
+   Horizon Hero — scoped under .cosmos-style
+   All rules prefixed to avoid collision with globals.css
+   ===================================================== */
+
+/* Reset body for full-screen canvas experience */
+.cosmos-style,
+.cosmos-style * {
+  box-sizing: border-box;
+}
+
+/* ── Container ── */
+.cosmos-style.hero-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+  font-family: 'Inter', -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── Three.js Canvas (fixed, full-screen) ── */
+.cosmos-style .cosmos-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Main hero content (first viewport, centered) ── */
+.cosmos-style .cosmos-hero-content {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+  padding: 0 5vw;
+  text-align: center;
+}
+
+/* ── Hero title ── */
+.cosmos-style .cosmos-hero-title {
+  font-size: clamp(3.5rem, 13vw, 11rem);
+  font-weight: 100;
+  letter-spacing: 0.22em;
+  line-height: 1;
+  margin: 0 0 2rem;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.cosmos-style .title-char {
+  display: inline-block;
+}
+
+/* ── Hero subtitle ── */
+.cosmos-style .cosmos-hero-subtitle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cosmos-style .subtitle-line {
+  font-size: clamp(0.85rem, 2vw, 1.15rem);
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* ── Side menu ── */
+.cosmos-style .cosmos-side-menu {
+  position: fixed;
+  left: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.cosmos-style .cosmos-menu-icon {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.cosmos-style .cosmos-menu-icon span {
+  display: block;
+  width: 22px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.cosmos-style .cosmos-vertical-text {
+  writing-mode: vertical-rl;
+  letter-spacing: 0.3em;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+}
+
+/* ── Scroll progress (bottom-right) ── */
+.cosmos-style .cosmos-scroll-progress {
+  position: fixed;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.cosmos-style .cosmos-scroll-text {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+}
+
+.cosmos-style .cosmos-progress-track {
+  width: 160px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  position: relative;
+}
+
+.cosmos-style .cosmos-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  transition: width 0.3s ease;
+}
+
+.cosmos-style .cosmos-section-counter {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Scroll sections (provide scroll distance + mid-scroll content) ── */
+.cosmos-style .cosmos-scroll-sections {
+  position: relative;
+  z-index: 1;
+  /* Spacer: pushes page height for scroll distance */
+  margin-top: 100vh;
+}
+
+.cosmos-style .cosmos-content-section {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.cosmos-style .cosmos-section-title {
+  font-size: clamp(2.5rem, 8vw, 7rem);
+  font-weight: 100;
+  letter-spacing: 0.22em;
+  margin: 0 0 1.5rem;
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.cosmos-style .cosmos-section-subtitle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+/* ── Mobile adjustments ── */
+@media (max-width: 767px) {
+  .cosmos-style .cosmos-hero-title {
+    font-size: clamp(2.5rem, 16vw, 5rem);
+    letter-spacing: 0.12em;
+  }
+
+  .cosmos-style .cosmos-side-menu {
+    display: none;
+  }
+
+  .cosmos-style .cosmos-scroll-progress {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .cosmos-style .cosmos-progress-track {
+    width: 100px;
+  }
+}
