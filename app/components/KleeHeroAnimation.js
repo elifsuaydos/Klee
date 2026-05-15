@@ -1,238 +1,310 @@
 "use client";
 
-/**
- * KleeHeroAnimation
- * ─────────────────
- * A scroll-triggered, pinned hero section for the Klee brand.
- *
- * Animation timeline (all tied to scroll via ScrollTrigger pin):
- *
- *  Phase 1  – SVG scales up; petals A, B, C fly off-screen (opacity → 0).
- *  Phase 2  – Petal D (the survivor) translates to the top-right corner.
- *  Phase 3  – Petal D rotates continuously AND its fill cycles through
- *             the four brand hex codes as scroll advances.
- *
- * All refs are used instead of string selectors per the requirements.
- */
-
 import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
-// ─── Register plugins once at module scope (safe for SSR because the
-//     import guard in ScrollTrigger itself handles the window check) ─────────
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 function SplitTextChars({ text }) {
   return (
     <>
       {text.split("").map((char, i) => (
-        <span key={i} className="char" style={{ display: "inline-block", opacity: 0, transform: "translateY(40px)", willChange: "transform, opacity" }}>
-          {char === " " ? "\u00A0" : char}
+        <span
+          key={i}
+          className="char"
+          style={{
+            display: "inline-block",
+            opacity: 0,
+            transform: "translateY(40px)",
+            willChange: "transform, opacity",
+          }}
+        >
+          {char === " " ? " " : char}
         </span>
       ))}
     </>
   );
 }
 
-// ─── Brand palette ────────────────────────────────────────────────────────────
-const BRAND_COLORS = ["#D14C18", "#F4D68C", "#7C9DD2", "#B2AB2B"];
+const PETAL_PATH =
+  "M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z";
 
-// ─── Hex → [r, g, b] helper ──────────────────────────────────────────────────
-function hexToRgb(hex) {
-  const h = hex.replace("#", "");
-  return [
-    parseInt(h.slice(0, 2), 16),
-    parseInt(h.slice(2, 4), 16),
-    parseInt(h.slice(4, 6), 16),
-  ];
-}
+const CLOVER_STYLE = {
+  position: "absolute",
+  left: "50%",
+  top: "50%",
+  marginLeft: "-140px",
+  marginTop: "-140px",
+  transformOrigin: "center center",
+};
 
-// ─── Interpolate across the palette at progress t ∈ [0, 1] ──────────────────
-function interpolatePalette(t) {
-  const segments = BRAND_COLORS.length - 1; // 3 segments
-  const scaled = t * segments;
-  const idx = Math.min(Math.floor(scaled), segments - 1);
-  const local = scaled - idx; // 0→1 within the segment
-
-  const [r1, g1, b1] = hexToRgb(BRAND_COLORS[idx]);
-  const [r2, g2, b2] = hexToRgb(BRAND_COLORS[idx + 1]);
-
-  const r = Math.round(r1 + (r2 - r1) * local);
-  const g = Math.round(g1 + (g2 - g1) * local);
-  const b = Math.round(b1 + (b2 - b1) * local);
-  return `rgb(${r},${g},${b})`;
-}
-
-// ─── Component ───────────────────────────────────────────────────────────────
 export default function KleeHeroAnimation() {
-  // Container – pinned by ScrollTrigger
   const sectionRef = useRef(null);
+  const cloverRef = useRef(null);
 
-  // The whole SVG – scaled up in Phase 1
-  const svgRef = useRef(null);
+  const step1Ref = useRef(null);
+  const step2Ref = useRef(null);
+  const step3Ref = useRef(null);
+  const step4Ref = useRef(null);
+  const finalContentRef = useRef(null);
 
-  // Individual petals
-  const petalARef = useRef(null); // Red        – flies off top-left
-  const petalBRef = useRef(null); // Yellow     – flies off top-right
-  const petalCRef = useRef(null); // Blue       – flies off bottom-left
-  const petalDRef = useRef(null); // Green      – the survivor
+  const redPetalRef = useRef(null);
+  const yellowPetalRef = useRef(null);
+  const bluePetalRef = useRef(null);
+  const greenPetalRef = useRef(null);
 
-  const text1Ref = useRef(null); // Green Text
-  const text2Ref = useRef(null); // Blue Text
-  const text3Ref = useRef(null); // Red Text
-  const text4Ref = useRef(null); // Yellow Text
-  const finalContentRef = useRef(null); // Final content container
-
-  // ─── GSAP animation ────────────────────────────────────────────────────────
   useGSAP(
     () => {
-      // Total scroll distance while pinned (controls how long each phase lasts)
-      const SCROLL_TOTAL = "500vh";
+      const section = sectionRef.current;
+      const clover = cloverRef.current;
 
-      // ── Master timeline pinned to the section ─────────────────────────────
+      const navbar = document.querySelector("#navbar");
+      if (navbar) {
+        gsap.set(navbar, { opacity: 0, pointerEvents: "none" });
+      }
+
+      gsap.set(clover, { scale: 0.18, x: 0, y: 0, opacity: 1, rotation: 0 });
+
+      const isMobile = () => section.clientWidth < 768;
+      const isLandscape = () =>
+        section.clientWidth > section.clientHeight && section.clientHeight < 500;
+
+      const centerScale = () => {
+        if (isLandscape()) return 1.2;
+        return isMobile() ? 1.8 : 2.8;
+      };
+      const cornerScale = () => {
+        if (isLandscape()) return 2.5;
+        return isMobile() ? 3.5 : 6;
+      };
+      const cX = (side) => {
+        let mult;
+        if (isLandscape()) mult = 0.38;
+        else if (isMobile()) mult = 0.40;
+        else mult = 0.50;
+        return side === "left" ? -(section.clientWidth * mult) : section.clientWidth * mult;
+      };
+      const cY = (side) => {
+        let mult;
+        if (isLandscape()) mult = 0.36;
+        else if (isMobile()) mult = 0.42;
+        else mult = 0.48;
+        return side === "top" ? -(section.clientHeight * mult) : section.clientHeight * mult;
+      };
+      const scrollEnd = () => {
+        if (isLandscape()) return "900vh";
+        if (isMobile()) return "1100vh";
+        return "1550vh";
+      };
+
+      const rp = redPetalRef.current;
+      const yp = yellowPetalRef.current;
+      const bp = bluePetalRef.current;
+      const gp = greenPetalRef.current;
+
       const master = gsap.timeline({
         scrollTrigger: {
-          trigger: sectionRef.current,
+          trigger: section,
           start: "top top",
-          end: SCROLL_TOTAL,
+          end: scrollEnd,
           pin: true,
           scrub: 1,
           anticipatePin: 1,
+          invalidateOnRefresh: true,
         },
       });
 
-      // Calculate corner targets to place the center of the clover 
-      // exactly at each corner of the screen.
-      const section = sectionRef.current;
-      const bottomRightX = () => section.clientWidth / 2;
-      const bottomRightY = () => section.clientHeight / 2;
+      // ── Phase 0: Grow at center (speed unchanged) ─────────────────────
+      master.to(clover, {
+        scale: centerScale,
+        duration: 0.8,
+        ease: "power2.out",
+      }, "grow");
 
-      const topLeftX = () => -(section.clientWidth / 2);
-      const topLeftY = () => -(section.clientHeight / 2);
-
-      const topRightX = () => section.clientWidth / 2;
-      const topRightY = () => -(section.clientHeight / 2);
-
-      const bottomLeftX = () => -(section.clientWidth / 2);
-      const bottomLeftY = () => section.clientHeight / 2;
-
-      // ── Phase 1: Center to Bottom Right ────────────────────────────────
+      // ── Step 1: Top-left — Red / TILSIM ───────────────────────────────
+      master.to(clover, {
+        x: () => cX("left"),
+        y: () => cY("top"),
+        scale: () => cornerScale(),
+        rotation: 540,
+        duration: 3,
+        ease: "power2.inOut",
+      }, "step1");
       master.to(
-        svgRef.current,
-        { 
-          scale: 8, // Smaller than 12, but still large and impactful
-          x: bottomRightX, 
-          y: bottomRightY, 
-          rotation: 180, // Turn 180 degrees while moving to first corner
-          transformOrigin: "center center", 
-          ease: "power2.inOut" 
-        },
-        "phase1"
+        step1Ref.current.querySelectorAll(".char"),
+        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "power2.out" },
+        "step1+=1.2"
       );
-      master.to(text1Ref.current.querySelectorAll(".char"), { opacity: 1, y: 0, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.out" }, "phase1+=0.25");
-      master.to(text1Ref.current.querySelector(".description"), { opacity: 1, y: 0, duration: 0.15, ease: "power2.out" }, "phase1+=0.25");
-
-      // (Fade out removed to keep all petals visible)
-
-      // ── Phase 2: Bottom Right to Top Left ──────────────────────────────
-      // Turn 90 degrees (180 + 90 = 270)
       master.to(
-        svgRef.current,
-        {
-          x: topLeftX,
-          y: topLeftY,
-          rotation: 270,
-          ease: "power2.inOut",
-        },
-        "phase2"
+        step1Ref.current.querySelector(".step-desc"),
+        { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" },
+        "step1+=1.5"
       );
-      master.to(text1Ref.current.querySelectorAll(".char"), { opacity: 0, y: -40, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.in" }, "phase2");
-      master.to(text1Ref.current.querySelector(".description"), { opacity: 0, y: -20, duration: 0.15, ease: "power2.in" }, "phase2");
-      master.to(text2Ref.current.querySelectorAll(".char"), { opacity: 1, y: 0, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.out" }, "phase2+=0.25");
-      master.to(text2Ref.current.querySelector(".description"), { opacity: 1, y: 0, duration: 0.15, ease: "power2.out" }, "phase2+=0.25");
+      master.to({}, { duration: 1.5 }, "step1-hold");
+      master.to([yp, bp, gp], { opacity: 0, duration: 0.35, ease: "power2.in" }, "step1-hold");
+      master.to([yp, bp, gp], { opacity: 0.92, duration: 0.35, ease: "power2.out" }, "step1-hold+=1.15");
 
-      // ── Phase 3: Top Left to Top Right ─────────────────────────────────
-      // Slide horizontally (keep rotation at 270).
-      // As it slides, the Blue petal exits and the Red petal naturally enters the view.
+      // ── Transition 1→2 ───────────────────────────────────────────────
       master.to(
-        svgRef.current,
-        {
-          x: topRightX,
-          y: topRightY,
-          rotation: 270,
-          ease: "power2.inOut",
-        },
-        "phase3"
+        step1Ref.current.querySelectorAll(".char"),
+        { opacity: 0, y: -40, duration: 0.75, stagger: { amount: 0.3 }, ease: "power2.in" },
+        "trans1"
       );
-      master.to(text2Ref.current.querySelectorAll(".char"), { opacity: 0, y: -40, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.in" }, "phase3");
-      master.to(text2Ref.current.querySelector(".description"), { opacity: 0, y: -20, duration: 0.15, ease: "power2.in" }, "phase3");
-      master.to(text3Ref.current.querySelectorAll(".char"), { opacity: 1, y: 0, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.out" }, "phase3+=0.25");
-      master.to(text3Ref.current.querySelector(".description"), { opacity: 1, y: 0, duration: 0.15, ease: "power2.out" }, "phase3+=0.25");
-
-      // ── Phase 4: Top Right to Bottom Left ──────────────────────────────
-      // Turn 90 degrees (270 + 90 = 360) to reveal the Yellow petal.
       master.to(
-        svgRef.current,
-        {
-          x: bottomLeftX,
-          y: bottomLeftY,
-          rotation: 360, 
-          ease: "power2.inOut",
-        },
-        "phase4"
+        step1Ref.current.querySelector(".step-desc"),
+        { opacity: 0, y: -20, duration: 0.75, ease: "power2.in" },
+        "trans1"
       );
-      master.to(text3Ref.current.querySelectorAll(".char"), { opacity: 0, y: -40, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.in" }, "phase4");
-      master.to(text3Ref.current.querySelector(".description"), { opacity: 0, y: -20, duration: 0.15, ease: "power2.in" }, "phase4");
-      master.to(text4Ref.current.querySelectorAll(".char"), { opacity: 1, y: 0, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.out" }, "phase4+=0.25");
-      master.to(text4Ref.current.querySelector(".description"), { opacity: 1, y: 0, duration: 0.15, ease: "power2.out" }, "phase4+=0.25");
 
-      // ── Phase 5: Fly to Navbar & Shrink ────────────────────────────────
+      // ── Step 2: Bottom-right — Green / VİZYON ────────────────────────
+      master.to(clover, {
+        x: () => cX("right"),
+        y: () => cY("bottom"),
+        scale: () => cornerScale(),
+        rotation: 900,
+        duration: 3,
+        ease: "power2.inOut",
+      }, "step2");
       master.to(
-        svgRef.current,
-        {
-          x: () => {
-            const navLogo = document.querySelector(".navbar-clover-logo");
-            if (!navLogo) return 0;
-            const navRect = navLogo.getBoundingClientRect();
-            return (navRect.left + navRect.width / 2) - (section.clientWidth / 2);
-          },
-          y: () => {
-            const navLogo = document.querySelector(".navbar-clover-logo");
-            if (!navLogo) return 0;
-            const navRect = navLogo.getBoundingClientRect();
-            return (navRect.top + navRect.height / 2) - (section.clientHeight / 2);
-          },
-          scale: 32 / 280, // Match the 32px width of the navbar logo
-          rotation: 720, // Spin one full revolution while flying to the navbar
-          ease: "power2.inOut",
-        },
-        "phase5"
+        step2Ref.current.querySelectorAll(".char"),
+        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "power2.out" },
+        "step2+=1.2"
       );
-      master.to(text4Ref.current.querySelectorAll(".char"), { opacity: 0, y: -40, duration: 0.15, stagger: { amount: 0.1 }, ease: "power2.in" }, "phase5");
-      master.to(text4Ref.current.querySelector(".description"), { opacity: 0, y: -20, duration: 0.15, ease: "power2.in" }, "phase5");
-      master.fromTo(finalContentRef.current, 
-        { opacity: 0, y: 40 }, 
-        { opacity: 1, y: 0, ease: "power2.out" }, 
-        "phase5+=0.1" // slightly after it starts shrinking
+      master.to(
+        step2Ref.current.querySelector(".step-desc"),
+        { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" },
+        "step2+=1.5"
+      );
+      master.to({}, { duration: 1.5 }, "step2-hold");
+      master.to([rp, yp, bp], { opacity: 0, duration: 0.35, ease: "power2.in" }, "step2-hold");
+      master.to([rp, yp, bp], { opacity: 0.92, duration: 0.35, ease: "power2.out" }, "step2-hold+=1.15");
+
+      // ── Transition 2→3 ───────────────────────────────────────────────
+      master.to(
+        step2Ref.current.querySelectorAll(".char"),
+        { opacity: 0, y: -40, duration: 0.75, stagger: { amount: 0.3 }, ease: "power2.in" },
+        "trans2"
+      );
+      master.to(
+        step2Ref.current.querySelector(".step-desc"),
+        { opacity: 0, y: -20, duration: 0.75, ease: "power2.in" },
+        "trans2"
       );
 
-      // ── Phase 6: Seamless Handoff ──────────────────────────────────────
-      // Instantly fade out the giant animated SVG and reveal the static navbar logo
-      master.to(svgRef.current, { opacity: 0, duration: 0.05 }, "phase6");
-      
-      // We must query the DOM node directly because the string selector 
-      // ".navbar-clover-logo" would fail due to the useGSAP scope being limited to sectionRef.
+      // ── Step 3: Bottom-left — Blue / TUTKU ───────────────────────────
+      master.to(clover, {
+        x: () => cX("left"),
+        y: () => cY("bottom"),
+        scale: () => cornerScale(),
+        rotation: 1260,
+        duration: 3,
+        ease: "power2.inOut",
+      }, "step3");
+      master.to(
+        step3Ref.current.querySelectorAll(".char"),
+        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "power2.out" },
+        "step3+=1.2"
+      );
+      master.to(
+        step3Ref.current.querySelector(".step-desc"),
+        { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" },
+        "step3+=1.5"
+      );
+      master.to({}, { duration: 1.5 }, "step3-hold");
+      master.to([rp, yp, gp], { opacity: 0, duration: 0.35, ease: "power2.in" }, "step3-hold");
+      master.to([rp, yp, gp], { opacity: 0.92, duration: 0.35, ease: "power2.out" }, "step3-hold+=1.15");
+
+      // ── Transition 3→4 ───────────────────────────────────────────────
+      master.to(
+        step3Ref.current.querySelectorAll(".char"),
+        { opacity: 0, y: -40, duration: 0.75, stagger: { amount: 0.3 }, ease: "power2.in" },
+        "trans3"
+      );
+      master.to(
+        step3Ref.current.querySelector(".step-desc"),
+        { opacity: 0, y: -20, duration: 0.75, ease: "power2.in" },
+        "trans3"
+      );
+
+      // ── Step 4: Top-right — Yellow / KIVILCIM ────────────────────────
+      master.to(clover, {
+        x: () => cX("right"),
+        y: () => cY("top"),
+        scale: () => cornerScale(),
+        rotation: 1620,
+        duration: 3,
+        ease: "power2.inOut",
+      }, "step4");
+      master.to(
+        step4Ref.current.querySelectorAll(".char"),
+        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "power2.out" },
+        "step4+=1.2"
+      );
+      master.to(
+        step4Ref.current.querySelector(".step-desc"),
+        { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" },
+        "step4+=1.5"
+      );
+      master.to({}, { duration: 1.5 }, "step4-hold");
+      master.to([rp, bp, gp], { opacity: 0, duration: 0.35, ease: "power2.in" }, "step4-hold");
+      master.to([rp, bp, gp], { opacity: 0.92, duration: 0.35, ease: "power2.out" }, "step4-hold+=1.15");
+
+      // ── Phase 5: Converge to navbar logo (speed unchanged) ────────────
       const navLogoNode = document.querySelector(".navbar-clover-logo");
+      const getNavX = () => {
+        if (!navLogoNode) return 0;
+        const r = navLogoNode.getBoundingClientRect();
+        return r.left + r.width / 2 - section.clientWidth / 2;
+      };
+      const getNavY = () => {
+        if (!navLogoNode) return 0;
+        const r = navLogoNode.getBoundingClientRect();
+        return r.top + r.height / 2 - section.clientHeight / 2;
+      };
+
+      master.to(
+        step4Ref.current.querySelectorAll(".char"),
+        { opacity: 0, y: -40, duration: 0.2, stagger: { amount: 0.1 }, ease: "power2.in" },
+        "converge"
+      );
+      master.to(
+        step4Ref.current.querySelector(".step-desc"),
+        { opacity: 0, y: -20, duration: 0.2, ease: "power2.in" },
+        "converge"
+      );
+      master.to(clover, {
+        x: getNavX,
+        y: getNavY,
+        scale: 32 / 280,
+        rotation: 1980,
+        duration: 2.5,
+        ease: "power2.inOut",
+      }, "converge");
+      master.fromTo(
+        finalContentRef.current,
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        "converge+=1.8"
+      );
+
+      // ── Phase 6: Handoff ──────────────────────────────────────────────
+      master.to(clover, { opacity: 0, duration: 0.05 }, "handoff");
       if (navLogoNode) {
-        master.to(navLogoNode, { opacity: 1, duration: 0.05 }, "phase6");
+        master.to(navLogoNode, { opacity: 1, duration: 0.05 }, "handoff");
+      }
+      if (navbar) {
+        master.to(
+          navbar,
+          { opacity: 1, pointerEvents: "auto", duration: 0.1 },
+          "handoff"
+        );
       }
     },
-    { scope: sectionRef } // useGSAP config – scope limits any potential string selector lookups
+    { scope: sectionRef }
   );
 
-  // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <section
       ref={sectionRef}
@@ -248,7 +320,50 @@ export default function KleeHeroAnimation() {
       }}
       aria-label="Klee animated hero"
     >
-      <div 
+      {/* ── Single clover SVG (all petals as one unit) ──────────────── */}
+      <svg
+        ref={cloverRef}
+        viewBox="0 0 100 100"
+        width="280"
+        height="280"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        style={CLOVER_STYLE}
+      >
+        <g transform="translate(50, 50)">
+          <path
+            ref={redPetalRef}
+            d={PETAL_PATH}
+            fill="var(--ketchup-red)"
+            opacity="0.92"
+            transform="translate(-1, -1) rotate(-45)"
+          />
+          <path
+            ref={yellowPetalRef}
+            d={PETAL_PATH}
+            fill="var(--sunshine-yellow)"
+            opacity="0.92"
+            transform="translate(1, -1) rotate(45)"
+          />
+          <path
+            ref={bluePetalRef}
+            d={PETAL_PATH}
+            fill="var(--sky-blue)"
+            opacity="0.92"
+            transform="translate(-1, 1) rotate(-135)"
+          />
+          <path
+            ref={greenPetalRef}
+            d={PETAL_PATH}
+            fill="var(--olive-green)"
+            opacity="0.92"
+            transform="translate(1, 1) rotate(135)"
+          />
+        </g>
+      </svg>
+
+      {/* ── Text overlays (above clover) ────────────────────────────── */}
+      <div
         style={{
           position: "absolute",
           top: 0,
@@ -257,138 +372,69 @@ export default function KleeHeroAnimation() {
           height: "100%",
           zIndex: 10,
           pointerEvents: "none",
-          overflow: "hidden"
+          overflow: "hidden",
         }}
       >
-        {/* Phase 1: Green */}
-        <div ref={text1Ref} style={{ position: "absolute", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <h2 style={{ whiteSpace: "nowrap", fontSize: "clamp(6rem, 18vw, 20rem)", fontWeight: "900", color: "#0f172a", margin: 0, lineHeight: 1, letterSpacing: "-0.04em", opacity: 0.9 }}>
-            <SplitTextChars text="TILSIMTILSIMTILSIMTILSIMTILSIMTILSIM" />
+        {/* Step 1: TILSIM — keyword top-left, desc bottom-right */}
+        <div ref={step1Ref} style={{ position: "absolute", inset: 0 }}>
+          <h2 className="hero-keyword" style={{ top: "10vh", left: "5vw" }}>
+            <SplitTextChars text="TILSIM" />
           </h2>
-          <div className="description" style={{ opacity: 0, transform: "translateY(20px)", position: "absolute", bottom: "15vh", right: "5vw", maxWidth: "360px", textAlign: "right", fontSize: "1.4rem", fontWeight: "400", color: "#0f172a", lineHeight: 1.4 }}>
+          <div className="step-desc step-desc--right" style={{ opacity: 0, transform: "translateY(20px)" }}>
             Klee ile çalışanların yakalayacağı o eşsiz dijital başarı şansı.
           </div>
         </div>
 
-        {/* Phase 2: Blue */}
-        <div ref={text2Ref} style={{ position: "absolute", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <h2 style={{ whiteSpace: "nowrap", fontSize: "clamp(6rem, 18vw, 20rem)", fontWeight: "900", color: "#0f172a", margin: 0, lineHeight: 1, letterSpacing: "-0.04em", opacity: 0.9 }}>
-            <SplitTextChars text="VİZYONVİZYONVİZYONVİZYONVİZYONVİZYON" />
+        {/* Step 2: VİZYON — keyword bottom-right, desc bottom-left */}
+        <div ref={step2Ref} style={{ position: "absolute", inset: 0 }}>
+          <h2 className="hero-keyword" style={{ bottom: "10vh", right: "5vw" }}>
+            <SplitTextChars text="VİZYON" />
           </h2>
-          <div className="description" style={{ opacity: 0, transform: "translateY(20px)", position: "absolute", bottom: "15vh", right: "5vw", maxWidth: "360px", textAlign: "right", fontSize: "1.4rem", fontWeight: "400", color: "#0f172a", lineHeight: 1.4 }}>
+          <div className="step-desc step-desc--left" style={{ opacity: 0, transform: "translateY(20px)" }}>
             Müşterinin hayali ve Klee&apos;nin tasarım gücü.
           </div>
         </div>
 
-        {/* Phase 3: Red */}
-        <div ref={text3Ref} style={{ position: "absolute", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <h2 style={{ whiteSpace: "nowrap", fontSize: "clamp(6rem, 18vw, 20rem)", fontWeight: "900", color: "#0f172a", margin: 0, lineHeight: 1, letterSpacing: "-0.04em", opacity: 0.9 }}>
-            <SplitTextChars text="TUTKUTUTKUTUTKUTUTKUTUTKUTUTKUTUTKU" />
+        {/* Step 3: TUTKU — keyword bottom-left, desc bottom-right */}
+        <div ref={step3Ref} style={{ position: "absolute", inset: 0 }}>
+          <h2 className="hero-keyword" style={{ bottom: "10vh", left: "5vw" }}>
+            <SplitTextChars text="TUTKU" />
           </h2>
-          <div className="description" style={{ opacity: 0, transform: "translateY(20px)", position: "absolute", bottom: "15vh", right: "5vw", maxWidth: "360px", textAlign: "right", fontSize: "1.4rem", fontWeight: "400", color: "#0f172a", lineHeight: 1.4 }}>
+          <div className="step-desc step-desc--right" style={{ opacity: 0, transform: "translateY(20px)" }}>
             Kodlamaya ve detaylara verilen önem.
           </div>
         </div>
 
-        {/* Phase 4: Yellow */}
-        <div ref={text4Ref} style={{ position: "absolute", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <h2 style={{ whiteSpace: "nowrap", fontSize: "clamp(6rem, 18vw, 20rem)", fontWeight: "900", color: "#0f172a", margin: 0, lineHeight: 1, letterSpacing: "-0.04em", opacity: 0.9 }}>
-            <SplitTextChars text="KIVILCIMKIVILCIMKIVILCIMKIVILCIMKIVILCIM" />
+        {/* Step 4: KIVILCIM — keyword top-right, desc bottom-left */}
+        <div ref={step4Ref} style={{ position: "absolute", inset: 0 }}>
+          <h2 className="hero-keyword" style={{ top: "10vh", right: "5vw" }}>
+            <SplitTextChars text="KIVILCIM" />
           </h2>
-          <div className="description" style={{ opacity: 0, transform: "translateY(20px)", position: "absolute", bottom: "15vh", right: "5vw", maxWidth: "360px", textAlign: "right", fontSize: "1.4rem", fontWeight: "400", color: "#0f172a", lineHeight: 1.4 }}>
+          <div className="step-desc step-desc--left" style={{ opacity: 0, transform: "translateY(20px)" }}>
             İnovasyon, farklı olma, yeni fikirler üretme.
           </div>
         </div>
       </div>
 
-      {/* FINAL CONTENT (appears when clover shrinks) */}
-      <div 
+      {/* ── Final content (appears when clover flies to navbar) ─────── */}
+      <div
         ref={finalContentRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "4vw",
-          padding: "0 8vw",
-          opacity: 0,
-          zIndex: 5
-        }}
+        className="hero-final-content"
+        style={{ opacity: 0 }}
       >
-        {/* Left: Photo Box */}
-        <div style={{ flex: 1, height: "60vh", background: "var(--gray-100)", borderRadius: "24px", overflow: "hidden", position: "relative", boxShadow: "var(--shadow-xl)" }}>
-          <img src="/project-1.png" alt="Klee Team" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div className="hero-final-image">
+          <img
+            src="/project-1.png"
+            alt="Klee Team"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
         </div>
-        
-        {/* Right: Text */}
-        <div style={{ flex: 1, textAlign: "left" }}>
-          <h1 style={{ fontSize: "clamp(3rem, 6vw, 5rem)", fontWeight: "900", color: "#0f172a", lineHeight: 1.1, letterSpacing: "-0.03em" }}>
-            Dijital <br/> deneyimler <br/> tasarlıyoruz.
+        <div className="hero-final-text">
+          <h1 className="hero-final-heading">
+            Dijital <br /> deneyimler <br /> tasarlıyoruz.
           </h1>
         </div>
       </div>
-      {/*
-        ── Klee Four-Leaf Clover SVG ───────────────────────────────────────
-        Geometrically optimized heart-shaped petals.
-        Coordinate system (viewBox 0 0 100 100):
-          Centre translates to (50, 50). Local origin is (0, 0).
-          Petal A: top-left, ketchup-red
-          Petal B: top-right, sunshine-yellow
-          Petal C: bottom-left, sky-blue
-          Petal D: bottom-right, olive-green  ← survivor
-      */}
-      <svg
-        ref={svgRef}
-        viewBox="0 0 100 100"
-        width="280"
-        height="280"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-        style={{ transformOrigin: "center center" }}
-      >
-        <g transform="translate(50, 50)">
-          {/* Petal A – flies top-left */}
-          <g ref={petalARef} fill="var(--ketchup-red)" style={{ transformOrigin: "0px 0px" }}>
-            <path 
-              d="M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z" 
-              opacity="0.92"
-              transform="translate(-1, -1) rotate(-45)" 
-            />
-          </g>
-
-          {/* Petal B – flies top-right */}
-          <g ref={petalBRef} fill="var(--sunshine-yellow)" style={{ transformOrigin: "0px 0px" }}>
-            <path 
-              d="M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z" 
-              opacity="0.92"
-              transform="translate(1, -1) rotate(45)" 
-            />
-          </g>
-
-          {/* Petal C – flies bottom-left */}
-          <g ref={petalCRef} fill="var(--sky-blue)" style={{ transformOrigin: "0px 0px" }}>
-            <path 
-              d="M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z" 
-              opacity="0.92"
-              transform="translate(-1, 1) rotate(-135)" 
-            />
-          </g>
-
-          {/* Petal D – the survivor */}
-          <g ref={petalDRef} fill="var(--olive-green)" style={{ transformOrigin: "0px 0px" }}>
-            <path 
-              d="M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z" 
-              opacity="0.92"
-              transform="translate(1, 1) rotate(135)" 
-            />
-          </g>
-
-        </g>
-      </svg>
     </section>
   );
 }

@@ -781,6 +781,165 @@ button {
 .stagger-6 { transition-delay: 0.3s; }
 
 /* ========================================
+   HERO ANIMATION
+   ======================================== */
+
+/* Keyword text (TILSIM / VİZYON / TUTKU / KIVILCIM) */
+.hero-keyword {
+  position: absolute;
+  font-size: clamp(3rem, 14vw, 18rem);
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+/* Landscape mobile: height-based sizing */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero-keyword {
+    font-size: clamp(2rem, 10vh, 8rem);
+  }
+}
+
+/* Step descriptions */
+.step-desc {
+  position: absolute;
+  font-size: clamp(0.85rem, 3vw, 1.4rem);
+  font-weight: 400;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+.step-desc--right {
+  bottom: 15vh;
+  right: 5vw;
+  max-width: min(360px, 70vw);
+  text-align: right;
+}
+
+.step-desc--left {
+  bottom: 15vh;
+  left: 5vw;
+  max-width: min(360px, 70vw);
+  text-align: left;
+}
+
+/* Mobile: all descriptions → bottom-center */
+@media (max-width: 767px) {
+  .step-desc--right,
+  .step-desc--left {
+    bottom: 5vh;
+    left: 7.5vw;
+    right: 7.5vw;
+    text-align: center;
+    max-width: none;
+    font-size: clamp(0.85rem, 4vw, 1.1rem);
+  }
+}
+
+/* Landscape mobile: compressed bottom-center */
+@media (max-height: 500px) and (orientation: landscape) {
+  .step-desc--right,
+  .step-desc--left {
+    bottom: 3vh;
+    left: 30vw;
+    right: 7.5vw;
+    text-align: center;
+    max-width: none;
+    font-size: clamp(0.75rem, 2vh, 1rem);
+  }
+}
+
+/* Final content layout */
+.hero-final-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4vw;
+  padding: 0 8vw;
+  z-index: 5;
+}
+
+.hero-final-image {
+  flex: 1;
+  height: 60vh;
+  background: var(--gray-100);
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-xl);
+}
+
+.hero-final-text {
+  flex: 1;
+  text-align: left;
+}
+
+.hero-final-heading {
+  font-size: clamp(2rem, 6vw, 5rem);
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+/* Mobile: image on top, text below */
+@media (max-width: 767px) {
+  .hero-final-content {
+    flex-direction: column;
+    gap: 4vh;
+    padding: 0 6vw;
+    justify-content: center;
+  }
+
+  .hero-final-image {
+    width: 100%;
+    flex: none;
+    height: 32vh;
+  }
+
+  .hero-final-text {
+    flex: none;
+    width: 100%;
+    text-align: center;
+  }
+
+  .hero-final-heading {
+    font-size: clamp(1.8rem, 8vw, 3rem);
+  }
+}
+
+/* Landscape mobile: side by side, compressed */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero-final-content {
+    flex-direction: row;
+    gap: 3vw;
+    padding: 0 5vw;
+  }
+
+  .hero-final-image {
+    flex: 1;
+    height: 70vh;
+  }
+
+  .hero-final-text {
+    flex: 1;
+    text-align: left;
+  }
+
+  .hero-final-heading {
+    font-size: clamp(1.4rem, 5vw, 2.5rem);
+  }
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 1024px) {

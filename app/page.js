@@ -284,7 +284,7 @@ function Navbar() {
   }, []);
 
   return (
-    <nav className={`navbar ${scrolled ? "scrolled" : ""}`} id="navbar">
+    <nav className={`navbar ${scrolled ? "scrolled" : ""}`} id="navbar" style={{ opacity: 0 }}>
       <div className="navbar-inner">
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <svg
