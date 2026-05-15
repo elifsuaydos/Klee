@@ -270,6 +270,17 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 
 > Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
 
+- **[2026-05-16] /horizon: Gezegen + Klee yonca focus animasyonu**
+  - `createAtmosphere` → `createPlanet` (solid sphere radius 180 + soluk halo BackSide). Gezegen sabit `z:-2000` konumunda, mat koyu mavi-mor (`#1f2847`).
+  - `createClover` eklendi: `SVGLoader` + `PETAL_PATH` ile 4 Three.Shape petal mesh. Renkler: `#D14C18` / `#F4D68C` / `#7C9DD2` / `#B2AB2B`. Billboard + idle z-rotation + scroll-based scale/opacity (progress 0.6→0.85 arası).
+  - Camera path yenilendi: HORIZON (z:300) → COSMOS (z:-300) → APPROACH (z:-1700). `lookAt(0,10,-2000)` (her zaman gezegene bakar). `camera.far: 2000→3500`.
+  - Bloom strength `0.8→0.45` (genel soluk his).
+  - Mountain threshold `>0.7→>0.6` (yaklaşma fazında dağlar daha erken temizlenir).
+  - Nebula bağımsızlaştırıldı (`z:-2500` sabit, mountain.position.z bağlantısı kesildi).
+  - scroll sectionProgress wrap bug'ı düzeltildi (progress=1'de sectionProgress=0'a sarıyordu; `totalProg >= totalSections ? 1 : totalProg % 1` ile düzeltildi).
+  - Cleanup güncellendi: planet group + clover group tüm children dispose.
+  - Dosya: [HorizonHeroSection.jsx](app/components/HorizonHeroSection.jsx).
+
 - **[2026-05-16] /horizon route: Three.js Horizon Hero entegrasyonu (demo)**
   - `npm install three` — Three.js eklendi (bundle sadece `/horizon` chunk'ına gider, anasayfa etkilenmez).
   - **Yeni bileşen:** [HorizonHeroSection.jsx](app/components/HorizonHeroSection.jsx) — starfield + nebula + dağlar + atmosfer + bloom post-processing + scroll kamera.
