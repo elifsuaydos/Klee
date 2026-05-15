@@ -217,31 +217,8 @@ button {
   font-weight: 600;
   letter-spacing: 0.1em;
   color: var(--gray-500);
-  transition: transform var(--transition-fast);
-  position: relative;
   padding: 4px 0;
   display: inline-block;
-}
-
-.navbar-link::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: #000000;
-  transition: width var(--transition-base);
-  border-radius: 1px;
-}
-
-.navbar-link:hover {
-  color: var(--gray-500);
-  transform: scale(1.08);
-}
-
-.navbar-link:hover::after {
-  width: 100%;
 }
 
 /* Mobile menu button */

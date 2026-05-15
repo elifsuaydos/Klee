@@ -362,21 +362,21 @@ function Navbar() {
             className="navbar-link"
             onClick={(e) => handleNavClick(e, "home")}
           >
-            ANA SAYFA
+            <RandomLetterSwapPingPong label="ANA SAYFA" />
           </a>
           <a
             href="#projects"
             className="navbar-link"
             onClick={(e) => handleNavClick(e, "projects")}
           >
-            PROJELER
+            <RandomLetterSwapPingPong label="PROJELER" />
           </a>
           <a
             href="#contact"
             className="navbar-link"
             onClick={(e) => handleNavClick(e, "contact")}
           >
-            İLETİŞİM
+            <RandomLetterSwapPingPong label="İLETİŞİM" />
           </a>
         </div>
       </div>

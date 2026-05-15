@@ -247,9 +247,14 @@ export default function KleeHeroAnimation() {
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            // Kill idle spin once scrolling begins
+            // Smooth idle spin kill once scrolling begins
             if (self.progress > 0.001 && idleSpin.isActive()) {
-              idleSpin.kill();
+              gsap.to(idleSpin, {
+                timeScale: 0,
+                duration: 0.4,
+                ease: "power2.out",
+                onComplete: () => idleSpin.kill(),
+              });
             }
             // Fade out intro screen (tagline + scroll prompt)
             if (introScreen && self.progress > 0.001) {
@@ -273,23 +278,27 @@ export default function KleeHeroAnimation() {
         x: () => cX("left"),
         y: () => cY("top"),
         scale: () => cornerScale(),
+        duration: 3,
+        ease: "expo.inOut",
+      }, "step1");
+      master.to(clover, {
         rotation: 540,
         duration: 3,
-        ease: "power2.inOut",
+        ease: "sine.inOut",
       }, "step1");
       master.to(
         step1Ref.current.querySelectorAll(".char"),
-        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "power2.out" },
+        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "back.out(1.2)" },
         "step1+=1.2"
       );
       master.to(
         step1Ref.current.querySelector(".step-desc"),
-        { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" },
+        { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
         "step1+=1.5"
       );
       master.to({}, { duration: 1.5 }, "step1-hold");
-      master.to([yp, bp, gp], { opacity: 0, duration: 0.35, ease: "power2.in" }, "step1-hold");
-      master.to([yp, bp, gp], { opacity: 0.92, duration: 0.35, ease: "power2.out" }, "step1-hold+=1.15");
+      master.to([yp, bp, gp], { opacity: 0.15, duration: 0.5, ease: "power2.inOut" }, "step1-hold");
+      master.to([yp, bp, gp], { opacity: 0.92, duration: 0.5, ease: "power2.inOut" }, "step1-hold+=1.0");
 
       // ── Transition 1→2 ───────────────────────────────────────────────
       master.to(
@@ -308,23 +317,27 @@ export default function KleeHeroAnimation() {
         x: () => cX("right"),
         y: () => cY("bottom"),
         scale: () => cornerScale(),
+        duration: 3,
+        ease: "expo.inOut",
+      }, "step2");
+      master.to(clover, {
         rotation: 900,
         duration: 3,
-        ease: "power2.inOut",
+        ease: "sine.inOut",
       }, "step2");
       master.to(
         step2Ref.current.querySelectorAll(".char"),
-        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "power2.out" },
+        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "back.out(1.2)" },
         "step2+=1.2"
       );
       master.to(
         step2Ref.current.querySelector(".step-desc"),
-        { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" },
+        { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
         "step2+=1.5"
       );
       master.to({}, { duration: 1.5 }, "step2-hold");
-      master.to([rp, yp, bp], { opacity: 0, duration: 0.35, ease: "power2.in" }, "step2-hold");
-      master.to([rp, yp, bp], { opacity: 0.92, duration: 0.35, ease: "power2.out" }, "step2-hold+=1.15");
+      master.to([rp, yp, bp], { opacity: 0.15, duration: 0.5, ease: "power2.inOut" }, "step2-hold");
+      master.to([rp, yp, bp], { opacity: 0.92, duration: 0.5, ease: "power2.inOut" }, "step2-hold+=1.0");
 
       // ── Transition 2→3 ───────────────────────────────────────────────
       master.to(
@@ -343,23 +356,27 @@ export default function KleeHeroAnimation() {
         x: () => cX("left"),
         y: () => cY("bottom"),
         scale: () => cornerScale(),
+        duration: 3,
+        ease: "expo.inOut",
+      }, "step3");
+      master.to(clover, {
         rotation: 1260,
         duration: 3,
-        ease: "power2.inOut",
+        ease: "sine.inOut",
       }, "step3");
       master.to(
         step3Ref.current.querySelectorAll(".char"),
-        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "power2.out" },
+        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "back.out(1.2)" },
         "step3+=1.2"
       );
       master.to(
         step3Ref.current.querySelector(".step-desc"),
-        { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" },
+        { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
         "step3+=1.5"
       );
       master.to({}, { duration: 1.5 }, "step3-hold");
-      master.to([rp, yp, gp], { opacity: 0, duration: 0.35, ease: "power2.in" }, "step3-hold");
-      master.to([rp, yp, gp], { opacity: 0.92, duration: 0.35, ease: "power2.out" }, "step3-hold+=1.15");
+      master.to([rp, yp, gp], { opacity: 0.15, duration: 0.5, ease: "power2.inOut" }, "step3-hold");
+      master.to([rp, yp, gp], { opacity: 0.92, duration: 0.5, ease: "power2.inOut" }, "step3-hold+=1.0");
 
       // ── Transition 3→4 ───────────────────────────────────────────────
       master.to(
@@ -378,23 +395,27 @@ export default function KleeHeroAnimation() {
         x: () => cX("right"),
         y: () => cY("top"),
         scale: () => cornerScale(),
+        duration: 3,
+        ease: "expo.inOut",
+      }, "step4");
+      master.to(clover, {
         rotation: 1620,
         duration: 3,
-        ease: "power2.inOut",
+        ease: "sine.inOut",
       }, "step4");
       master.to(
         step4Ref.current.querySelectorAll(".char"),
-        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "power2.out" },
+        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "back.out(1.2)" },
         "step4+=1.2"
       );
       master.to(
         step4Ref.current.querySelector(".step-desc"),
-        { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" },
+        { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
         "step4+=1.5"
       );
       master.to({}, { duration: 1.5 }, "step4-hold");
-      master.to([rp, bp, gp], { opacity: 0, duration: 0.35, ease: "power2.in" }, "step4-hold");
-      master.to([rp, bp, gp], { opacity: 0.92, duration: 0.35, ease: "power2.out" }, "step4-hold+=1.15");
+      master.to([rp, bp, gp], { opacity: 0.15, duration: 0.5, ease: "power2.inOut" }, "step4-hold");
+      master.to([rp, bp, gp], { opacity: 0.92, duration: 0.5, ease: "power2.inOut" }, "step4-hold+=1.0");
 
       // ── Phase 5: Converge to navbar logo (speed unchanged) ────────────
       const navLogoNode = document.querySelector(".navbar-clover-logo");

@@ -1,128 +1,330 @@
 # PROJECT_MEMORY.md
 
-> Bu dosya, Klee projesinin canlı "beyni"dir. Her yeni konuşmada bu dosya ilk olarak okunur, projeyi tekrar tekrar taramaya gerek kalmaz. Her önemli değişiklikten sonra ilgili bölüm güncellenir.
+> Bu dosya, Klee projesinin canlı "beynidir". Her yeni konuşma başında AI ilk olarak bu dosyayı okumalı — projeyi tekrar tekrar taramak yerine buradan kavrar. **Her önemli değişiklikten sonra ilgili bölüm güncellenmelidir** (bkz. en sondaki [Çalışma Kuralları](#-çalışma-kuralları-aiya-emir)).
+
+---
+
+## 📑 İçindekiler
+
+1. [Proje Özeti](#-proje-özeti)
+2. [Mimari & Teknoloji Stack](#-mimari--teknoloji-stack)
+3. [Dosya Yapısı & Sorumluluklar](#-dosya-yapısı--sorumluluklar)
+4. [Bileşen Detayları](#-bileşen-detayları)
+5. [Hero Animasyonu — Adım Adım Zaman Çizelgesi](#-hero-animasyonu--adım-adım-zaman-çizelgesi)
+6. [Veri Akışı & Etkileşim Modeli](#-veri-akışı--etkileşim-modeli)
+7. [Tasarım Sistemi & CSS Token'ları](#-tasarım-sistemi--css-tokenları)
+8. [Responsive Strateji](#-responsive-strateji)
+9. [Kritik Konfigürasyonlar & Sabit Değerler](#️-kritik-konfigürasyonlar--sabit-değerler)
+10. [Mevcut Durum & Bilinen Sorunlar](#-mevcut-durum--bilinen-sorunlar)
+11. [Son Değişiklikler (Changelog)](#-son-değişiklikler-changelog)
+12. [Bir Sonraki Adımlar (Önceliklendirilmiş)](#-bir-sonraki-adımlar-önceliklendirilmiş)
+13. [Çalışma Kuralları (AI'ya Emir)](#-çalışma-kuralları-aiya-emir)
 
 ---
 
 ## 🧠 Proje Özeti
 
-**Klee**, Ankara merkezli, dünya geneline uzaktan hizmet veren bir **web geliştirme ajansının** tanıtım sitesidir (tek sayfa, Türkçe). Site; ajansın kimliğini (TILSIM, VİZYON, TUTKU, KIVILCIM değerleri), seçilmiş projelerini ve iletişim bilgilerini sergiler. Hedef kitlesi premium dijital ürün arayan kurumsal ve girişimci müşterilerdir. Tüm görsel kimlik **dört yapraklı bir yonca logosu** (4 renk: kırmızı, sarı, mavi, yeşil) etrafında kurgulanmıştır ve hero bölümünde GSAP ile köşeleri dolaşan scroll-driven animasyon olarak sergilenir.
+**Klee**, Ankara merkezli, dünya geneline uzaktan hizmet veren bir **web geliştirme ajansının** tanıtım sitesidir.
+
+- **Sayfa Tipi:** Tek sayfa (single-page) Türkçe landing.
+- **Hedef Kitle:** Premium dijital ürün arayan kurumsal ve girişimci müşteriler.
+- **Marka Kimliği:** Dört yapraklı yonca logosu (4 renk: **kırmızı = TILSIM**, **yeşil = VİZYON**, **mavi = TUTKU**, **sarı = KIVILCIM**).
+- **Hero Anlatımı:** Yonca, GSAP ScrollTrigger ile pin'lenmiş bir bölümde 4 köşeyi sırayla dolaşır; her köşede tek renkli yaprak öne çıkıp ilgili değer kelimesi belirir. Sonunda yonca küçülerek navbar logosuna "handoff" yapar.
+- **Dil:** Tüm UI metni Türkçe (`<html lang="tr">`).
 
 ## 🏗️ Mimari & Teknoloji Stack
 
-- **Framework:** Next.js **16.2.6** (App Router) — ⚠️ AGENTS.md'de altı çizildiği gibi *eğitim verisindeki Next.js değil*. API/konvansiyon değişmiş olabilir; kod yazmadan önce `node_modules/next/dist/docs/` altındaki ilgili rehber okunmalı.
-- **React:** 19.2.4 (React 19)
-- **Animasyon:** GSAP 3.15.0 + `@gsap/react` (useGSAP hook) + `ScrollTrigger` (pinned scroll timeline)
-- **Stil:** Saf CSS (global `app/globals.css`), CSS custom properties (design tokens), Inter font (Google Fonts üzerinden)
-- **Görseller:** `next/image`
-- **Lint:** ESLint 9 + `eslint-config-next`
-- **Build/Run:** `npm run dev | build | start | lint`
-- **Dil:** JavaScript (TypeScript yok), JSX
-- **Yapılandırma:** [next.config.mjs](next.config.mjs) şu an boş; [jsconfig.json](jsconfig.json) mevcut.
+| Katman | Teknoloji | Notlar |
+|---|---|---|
+| Framework | **Next.js 16.2.6** (App Router) | ⚠️ Eğitim verisindeki Next.js değil. `node_modules/next/dist/docs/` altındaki rehber okunmadan kod yazılmamalı (AGENTS.md uyarısı). |
+| UI | **React 19.2.4** | Server/Client Components. Sayfanın büyük kısmı `"use client"`. |
+| Animasyon | **GSAP 3.15.0** + `@gsap/react@2.1.2` (`useGSAP` hook) + **ScrollTrigger** | Master timeline, `pin: true`, `scrub: 1`. |
+| Stil | Saf CSS — `app/globals.css` (1165 satır), CSS custom properties | Tailwind / CSS-in-JS yok. Inline style yalnızca dinamik konum/opaklık için. |
+| Tipografi | **Inter** (body) + **Outfit** (heading) — Google Fonts üzerinden `@import` | `--font-family` ve `--font-heading` token'ları. |
+| Görseller | `next/image` (project kartları, galeri) + raw `<img>` (hero final card içinde) | `next.config.mjs` boş; harici domain yok. |
+| Lint | ESLint 9 + `eslint-config-next` | `npm run lint`. |
+| Dil | **JavaScript (TypeScript YOK)**, JSX | `jsconfig.json` mevcut. |
+| Çalıştırma | `npm run dev | build | start | lint` | — |
+| API/Env | **YOK** — proje tamamen statik | Form veya 3rd-party servis çağrısı içermiyor. |
 
 ## 📁 Dosya Yapısı & Sorumluluklar
 
 ```
 Klee-main/
 ├── app/
-│   ├── layout.js              → RootLayout, <html lang="tr">, SEO metadata (title, description, OG)
-│   ├── page.js                → Tüm landing page (Navbar, Projects, Contact, Footer) + tab/galeri state
-│   ├── globals.css            → Tüm site stilleri + tasarım token'ları + responsive breakpoint'ler
-│   ├── page.module.css        → Eski create-next-app artığı, ŞU AN KULLANILMIYOR (silinebilir)
+│   ├── layout.js                 → RootLayout. <html lang="tr">. SEO metadata (title/description/OG, keywords).
+│   ├── page.js                   → Tüm landing page (639 satır). Navbar, ProjectsSection, ContactSection, Footer + tab/galeri state.
+│   ├── globals.css               → Tüm site stilleri + tasarım token'ları + responsive breakpoint'ler (1165 satır).
+│   ├── page.module.css           → ⚠️ create-next-app artığı. ŞU AN KULLANILMIYOR (silinebilir).
 │   ├── favicon.ico
 │   └── components/
-│       ├── KleeHeroAnimation.js  → GSAP scroll-pinned hero: yonca 4 köşeyi gezer, her köşede bir kelime (TILSIM/VİZYON/TUTKU/KIVILCIM) belirir, sonunda navbar logosuna küçülür
-│       ├── ScrambleText.js       → Matrix benzeri karakter "scramble" efekti; intersection observer ile veya hoverOnly modunda
-│       └── GalleryModal.js       → Tam ekran yatay snap-scroll proje galerisi (sol/sağ ok + kapat)
-├── public/                    → klee-logo.svg + project-1..5.png + create-next-app default SVG'leri
-├── AGENTS.md                  → ⚠️ "Bu bildiğin Next.js değil" uyarısı (CLAUDE.md de buraya yönlendiriyor)
-├── CLAUDE.md                  → Sadece `@AGENTS.md` ve PROJECT_MEMORY.md(import)
-├── README.md                  → Default create-next-app README (özelleştirilmemiş)
-├── PROJECT_MEMORY.md          → BU DOSYA
+│       ├── KleeHeroAnimation.js  → GSAP scroll-pinned hero (638 satır). Intro screen → idle spin → 4 köşe → konvergans → navbar handoff. CyclingWord ve SplitTextChars iç bileşenleri burada.
+│       ├── Card3D.js             → 3D mouse-tilt kartı (CardContainer / CardBody / CardItem). Hero final görselinde kullanılıyor. Aceternity-UI'dan port; perspective: 1000px, transition fast (80ms) tracking + slow spring (700ms cubic-bezier) return.
+│       ├── RandomLetterSwap.js   → Hover'da harf-harf rastgele sırayla yukarı/aşağı kayan text efekti. İki export: PingPong (geri döner) ve Forward (tek seferlik). GSAP ile harf bazlı staggered animasyon.
+│       ├── ScrambleText.js       → Matrix benzeri karakter scramble efekti. IntersectionObserver ile otomatik veya hoverOnly. ⚠️ ŞU AN page.js'te import edilmiyor (RandomLetterSwap'a geçildi). Silinmeden önce kontrol et.
+│       └── GalleryModal.js       → Tam ekran yatay snap-scroll proje galerisi (← → ve kapat butonları). next/image fill + objectFit:contain.
+├── public/
+│   ├── klee-logo.svg
+│   ├── project-1.png … project-5.png
+│   └── (file.svg, globe.svg, next.svg, vercel.svg, window.svg — create-next-app default artıkları)
+├── AGENTS.md                     → ⚠️ "Bu bildiğin Next.js değil" uyarısı. CLAUDE.md de buraya yönlendirir.
+├── CLAUDE.md                     → Sadece `@AGENTS.md` ve `@PROJECT_MEMORY.md` import eder.
+├── PROJECT_MEMORY.md             → BU DOSYA (proje beyni).
+├── README.md                     → ⚠️ Default create-next-app şablonu, Klee'ye özelleştirilmemiş.
 ├── package.json / package-lock.json
-├── next.config.mjs            → Boş config
-├── jsconfig.json
-└── eslint.config.mjs
+├── next.config.mjs               → Boş config (`{}`).
+├── jsconfig.json                 → JS modül yolları.
+└── eslint.config.mjs             → ESLint flat config (eslint-config-next).
 ```
 
-## 🔄 Veri Akışı
+## 🧩 Bileşen Detayları
 
-1. Kullanıcı siteye girer → [app/layout.js](app/layout.js) → [app/page.js](app/page.js) `Home` render edilir.
-2. `Home` 4 bölüm render eder: `<Navbar />`, `<KleeHeroAnimation />`, `<ProjectsSection />`, `<ContactSection />`, `<Footer />`.
-3. **Hero akışı** ([KleeHeroAnimation.js](app/components/KleeHeroAnimation.js)):
-   - Sayfa açılışında navbar `opacity:0` ile gizlenir.
-   - `useGSAP` master timeline `ScrollTrigger` ile `pin: true, scrub: 1, end: "600vh"` olarak bağlanır.
-   - Yonca `scale(0.12)` ortadan büyür → sol-üst (TILSIM/kırmızı) → sağ-alt (VİZYON/yeşil) → sol-alt (TUTKU/mavi) → sağ-üst (KIVILCIM/sarı) → navbar logosuna küçülür ve oradaki gerçek SVG'ye "handoff" yapılır, navbar görünür hale gelir, final içerik (görsel + "Dijital deneyimler tasarlıyoruz." başlığı) fade-in olur.
-   - Her adımda `SplitTextChars` karakterleri ayrı `<span>`'lere böler, GSAP stagger ile fade/translate yapar.
-4. **Projects akışı** ([app/page.js](app/page.js#L376)):
-   - `PROJECT_TABS` ("PROJE 1..5") sekmelerinden biri seçilince → 280ms fade-out → `PROJECTS_DATA[tab]` swap → fade-in.
-   - Bir karta tıklanınca `galleryIndex` set edilir ve `<GalleryModal>` açılır.
-   - `ScrambleText` sekme metinlerinde `hoverOnly={true}`, kart başlıklarında otomatik (intersection observer ile) çalışır.
-5. **Gallery akışı** ([GalleryModal.js](app/components/GalleryModal.js)): yatay scroll-snap container, sol/sağ butonları `scrollTo` ile `clientWidth` bazlı index'i değiştirir; `initialIndex`'e 50ms gecikmeli `behavior:"instant"` kaydırma; modal açıkken `document.body.overflow = "hidden"`.
-6. **Genel fade-in animasyonu:** `Home` içindeki `IntersectionObserver` tüm `.fade-in-up` elementlerine kesişme anında `.visible` ekler ([globals.css](app/globals.css) `--transition-base` ile).
+### 1. `Navbar` ([app/page.js](app/page.js#L278))
+- Sticky/fixed (`position: fixed`, `z-index: 1000`). Backdrop-filter blur(20px).
+- **Başlangıç durumu:** `opacity: 0`, `pointerEvents: "none"`. Hero animasyonu sonundaki "handoff" fazında görünür hale gelir.
+- Kendi içinde **gizli yonca SVG** (`.navbar-clover-logo`, opacity:0) barındırır — hero clover bu noktaya küçülüp tam üstüne oturur ve handoff yapılır.
+- **Linkler artık `RandomLetterSwapPingPong` ile sarılı** (ANA SAYFA / PROJELER / İLETİŞİM). Underline `::after` efekti kaldırıldı.
+- Mobile menu: hamburger butonu, `<768px` altında açılır.
+- Scroll > 20px olduğunda `.scrolled` class'ı eklenir → shadow.
 
-## ⚙️ Kritik Konfigürasyonlar
+### 2. `KleeHeroAnimation` ([app/components/KleeHeroAnimation.js](app/components/KleeHeroAnimation.js))
+- **Pinned ScrollTrigger** ile `min-height: 100vh` bölümü scroll boyunca sabitler.
+- **Idle spin:** Kullanıcı henüz scroll etmediyse yonca yavaşça döner (`+=360°`, 18s loop, ease:"none"). İlk scroll'da `idleSpin.kill()`.
+- **Intro screen** ([KleeHeroAnimation.js:469](app/components/KleeHeroAnimation.js#L469)): "Klee ile HAYALİNDEKİ WEBSİTENE kavuş" başlığı + "aşağı kaydır" prompt + animated arrow. Scroll başlayınca fade-out (0.4s).
+- **İç bileşenler:**
+  - `SplitTextChars` — string'i `<span class="char">` dizisine böler, her karakter ayrı animasyon hedefi olur.
+  - `CyclingWord` — final başlıkta "Dijital **deneyimler/websiteleri/hayalleri/projeleri** tasarlıyoruz." kelimesini her **2.4 saniyede** bir slide+blur ile değiştirir. Tüm kelimeler DOM'da, GSAP ile y/opacity/filter/scale animasyonu.
 
-- **API key/env yok** — proje tamamen statik, dış servis çağrısı içermiyor.
-- **Tasarım token'ları** ([globals.css](app/globals.css#L6)): `--sky-blue #7C9DD2`, `--ketchup-red #D14C18`, `--olive-green #B2AB2B`, `--sunshine-yellow #F4D68C`. Renk varyasyonları, gri skala, gölge, radius, transition değişkenleri burada.
-- **Container max:** 1200px. **Section padding:** 120px (mobilde 80px / 64px).
-- **Yonca SVG `PETAL_PATH`** sabiti hem [KleeHeroAnimation.js](app/components/KleeHeroAnimation.js#L31) içinde hem de [page.js](app/page.js#L302) navbar SVG'sinde tekrarlanıyor — değiştirilirse her iki yerde güncellenmeli.
-- **İletişim bilgileri (hard-coded):** email `hello@klee.io`, konum `Ankara, Türkiye`, WhatsApp linki `https://wa.me/` (numara yok!), telefon `tel:+90` (numara yok!).
-- **next.config.mjs** boş — `images` domain config yok, ihtiyaç olursa eklenecek.
+### 3. `Card3D` ([app/components/Card3D.js](app/components/Card3D.js))
+- Aceternity-UI 3D tilt kartının saf JS'e port'lu versiyonu.
+- **2 farklı transition:** mouse hareketi sırasında `0.08s linear` (anlık takip), mouse leave'de `0.7s cubic-bezier(0.23, 1, 0.32, 1)` (yumuşak yay geri dönüş).
+- Hero final görseli bu kartla sarılı; `translateZ(60)` görsel + `translateZ(80)` glare layer.
+- `useMouseEnter` hook'u `MouseEnterContext` üzerinden CardItem'lara durum aktarır.
+
+### 4. `RandomLetterSwap` ([app/components/RandomLetterSwap.js](app/components/RandomLetterSwap.js))
+- Hover'da harflerin yerine duplicate "ghost" harflerin slide-in olduğu efekt.
+- **Mount başına shuffled order** (`shuffledRef`) — her harf rastgele sırayla canlanır.
+- İki export:
+  - **`RandomLetterSwapPingPong`** — mouseEnter'da animateIn, mouseLeave'de animateOut. Nav linklerde, proje sekmelerinde, WhatsApp CTA'da, navbar linklerinde kullanılır.
+  - **`RandomLetterSwapForward`** — mouseEnter'da tek seferlik döngü (mouseLeave reset etmez). Proje kart başlıklarında kullanılır.
+- Erişilebilirlik: gerçek metin görsel olarak gizli (`clip: rect(0,0,0,0)`) bir span'a yazılır, görünür harfler `aria-hidden`.
+
+### 5. `GalleryModal` ([app/components/GalleryModal.js](app/components/GalleryModal.js))
+- Yatay snap-scroll container (`gallery-modal-scroll`).
+- Sol/sağ ok butonları `scrollTo` ile `clientWidth × index` kaydırır.
+- `initialIndex`'e 50ms gecikmeli `behavior:"instant"` ile başlangıç pozisyonu.
+- `document.body.style.overflow = "hidden"` ile sayfa scroll lock.
+- ⚠️ **Eksik:** ESC tuşu, ok tuşu klavye navigasyonu, focus trap, `role="dialog"`, `aria-modal`, görsel başlık/desc.
+
+### 6. `ScrambleText` ([app/components/ScrambleText.js](app/components/ScrambleText.js))
+- ⚠️ **Şu an page.js'te kullanılmıyor.** Önceki sürümde sekme ve kart başlıklarında vardı, `RandomLetterSwap`'a geçildikten sonra import kaldırıldı. Component dosyası duruyor; gelecekte ihtiyaç olursa kullanılabilir veya silinebilir.
+
+## 🎬 Hero Animasyonu — Adım Adım Zaman Çizelgesi
+
+ScrollTrigger ayarı: `pin: true`, `scrub: 1`, `anticipatePin: 1`, `invalidateOnRefresh: true`. **Toplam scroll mesafesi:**
+- Desktop: `1550vh`
+- Mobile (`<768px`): `1100vh`
+- Landscape (`width > height && height < 500px`): `900vh`
+
+| Faz | Etiket | Ne olur? | Süre (timeline) |
+|---|---|---|---|
+| 0 | `grow` | Intro state → tam opaklık, center scale (desktop 2.8 / mobile 1.8 / landscape 1.2). | 0.8s |
+| 1 | `step1` | Yonca **sol-üst** köşeye, rotation 540°. **TILSIM** kelimesi (kırmızı tema) sol-üstte belirir; desc sağ-altta. | 3s travel + 1.2s metin gecikmesi |
+| 1-hold | `step1-hold` | 1.5s bekle. **Sarı/mavi/yeşil yapraklar** opaklık 0'a fade (0.35s) → 1.15s sonra 0.92'ye geri döner. Tek kırmızı yaprak görünür. | 1.5s |
+| ... | `trans1` | TILSIM karakterleri ve desc yukarı kayıp kaybolur (0.75s). | — |
+| 2 | `step2` | Yonca **sağ-alt** köşeye, rotation 900°. **VİZYON** (yeşil tema) sağ-altta; desc sol-altta. Hold'da kırmızı/sarı/mavi fade. | 3s + 1.5s hold |
+| 3 | `step3` | Yonca **sol-alt** köşeye, rotation 1260°. **TUTKU** (mavi tema) sol-altta; desc sağ-altta. Hold'da kırmızı/sarı/yeşil fade. | 3s + 1.5s hold |
+| 4 | `step4` | Yonca **sağ-üst** köşeye, rotation 1620°. **KIVILCIM** (sarı tema) sağ-üstte; desc sol-altta. Hold'da kırmızı/mavi/yeşil fade. | 3s + 1.5s hold |
+| 5 | `converge` | Yonca navbar logo pozisyonuna küçülür (scale `32/280 ≈ 0.114`, rotation 1980°). | 2.5s |
+| 5-end | `converge+=1.8` | Hero final content (3D tilt card + "Dijital ... tasarlıyoruz" başlık) fade-in. | 0.4s |
+| 6 | `handoff` | Hero clover opacity 0, navbar logo opacity 1, navbar opacity 1 + pointerEvents auto. | 0.05–0.1s |
+
+### Animasyon Sabitleri ([KleeHeroAnimation.js:175-233](app/components/KleeHeroAnimation.js#L175))
+
+```js
+isMobile()    = section.clientWidth < 768
+isLandscape() = section.clientWidth > section.clientHeight && section.clientHeight < 500
+
+introScale  = landscape:1.0  | mobile:1.3  | desktop:1.86
+centerScale = landscape:1.2  | mobile:1.8  | desktop:2.8
+cornerScale = landscape:2.5  | mobile:3.5  | desktop:6     // köşede tek yaprak ekrandan büyük taşar
+cX mult     = landscape:0.38 | mobile:0.40 | desktop:0.50
+cY mult     = landscape:0.36 | mobile:0.42 | desktop:0.48
+```
+
+### Petal Renk-Pozisyon Eşlemesi
+
+Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetalRef` / `greenPetalRef`. Her köşe hold'unda **o köşenin tema rengi DIŞINDAKİ 3 yaprak** fade-out olur → 1.15s sonra geri gelir. Rotation değerleri (540, 900, 1260, 1620, 1980) tema yaprağının her köşede merkeze bakacak şekilde +180° offset ile ayarlanmıştır.
+
+## 🔄 Veri Akışı & Etkileşim Modeli
+
+1. **Sayfa açılışı:** [layout.js](app/layout.js) → `<html lang="tr">` → `<body>` → [page.js](app/page.js) `Home`.
+2. `Home` 5 child render eder: `<Navbar />`, `<KleeHeroAnimation />`, `<ProjectsSection />`, `<ContactSection />`, `<Footer />`.
+3. `Home` içinde **global IntersectionObserver** kurulur; `.fade-in-up` class'lı tüm elementlere intersection anında `.visible` ekler ([page.js:609](app/page.js#L609)).
+4. **Hero:** Yukarıdaki zaman çizelgesi.
+5. **Projects:** `PROJECT_TABS` (5 adet "PROJE 1..5") sekmesinden biri tıklanınca → 280ms fade-out → `PROJECTS_DATA[tab]` swap → fade-in. Her sekmede 5 proje kartı.
+6. **Project card click:** `galleryIndex` set + `galleryOpen = true` → `<GalleryModal>` açılır.
+7. **Gallery:** Yatay snap-scroll, ok butonları ile gezinme. `document.body.overflow = "hidden"`.
+8. **Contact:** Statik kartlar (email, telefon, konum) + WhatsApp CTA (`https://wa.me/`, **numarasız**).
+9. **Footer:** Brand + 3 link (Whatsapp/Gmail/Phone) + copyright.
+
+## 🎨 Tasarım Sistemi & CSS Token'ları
+
+[globals.css](app/globals.css) ilk 63 satırı (`:root`):
+
+| Token | Değer | Kullanım |
+|---|---|---|
+| `--sky-blue` | `#7C9DD2` | TUTKU teması, navbar mavi yaprak |
+| `--ketchup-red` | `#D14C18` | TILSIM teması, navbar kırmızı yaprak |
+| `--olive-green` | `#B2AB2B` | VİZYON teması, navbar yeşil yaprak, ::selection |
+| `--sunshine-yellow` | `#F4D68C` | KIVILCIM teması, navbar sarı yaprak |
+| (her birinin `-light` / `-dark` varyantı var) | | |
+| `--gray-50 … --gray-900` | Slate tonları | Metin, çerçeve, ikincil yüzeyler |
+| `--font-family` | `Inter` | Body |
+| `--font-heading` | `Outfit` | Başlıklar, hero keyword, navbar-brand |
+| `--container-max` | `1200px` | `.container` |
+| `--section-padding` | `120px 0` (mobilde 80px / landscape kompakt) | |
+| `--shadow-sm/md/lg/xl` | Slate-bazlı alpha gölgeler | |
+| `--transition-fast/base/slow` | `0.2s / 0.3s / 0.5s` cubic-bezier(0.4,0,0.2,1) | |
+| `--radius-sm…2xl` | `8px / 12px / 16px / 20px / 24px` | |
+
+**Film grain overlay:** `body::after` üzerinde SVG fractalNoise (opacity 0.028), `grain` keyframe ile her 0.4s konum değişir. Tüm sayfada hafif dokulu his verir.
+
+## 📐 Responsive Strateji
+
+- **Tek ana breakpoint:** `767px` (`@media (max-width: 767px)`).
+- **Özel landscape mod:** `@media (max-height: 500px) and (orientation: landscape)` — yatay tutulmuş telefon/küçük tablet için.
+- Tipografi `clamp(min, vw/vh, max)` ile fluid.
+- Hero animasyonunda JS tarafı da `isMobile()` / `isLandscape()` kontrol eder; CSS ile JS aynı eşik değerini kullanır.
+- Projects grid'i bento layout — 1024px ve 768px'te yeniden düzenlenir (üst sıra 1-2, alt sıra 3-4-5; mobilde tek kolon).
+- Hero final content: desktop'ta yatay (image + text yan yana), mobilde dikey (image üstte 32vh, text altta), landscape'te tekrar yatay ama kompakt.
+
+## ⚙️ Kritik Konfigürasyonlar & Sabit Değerler
+
+| Yer | Sabit | Değer / Not |
+|---|---|---|
+| [KleeHeroAnimation.js:32](app/components/KleeHeroAnimation.js#L32) | `PETAL_PATH` | Tek yaprak SVG path string'i. **Hem hero clover'da hem navbar SVG'de** ([page.js:318](app/page.js#L318)) tekrarlanır — değişirse iki yer de güncellenmeli. |
+| [KleeHeroAnimation.js:39](app/components/KleeHeroAnimation.js#L39) | `CYCLE_WORDS` | `["deneyimler", "websiteleri", "hayalleri", "projeleri"]` — final başlıkta dönen kelimeler. |
+| [page.js:13](app/page.js#L13) | `PROJECT_TABS` | `["PROJE 1" … "PROJE 5"]`. |
+| [page.js:15](app/page.js#L15) | `PROJECTS_DATA` | 5 sekme × 5 proje. **Hepsi placeholder.** |
+| [page.js:538](app/page.js#L538) | Telefon | `+90 00000000` (placeholder, gerçek numara yok). |
+| [page.js:528](app/page.js#L528) | Email | `hello@klee.io`. |
+| [page.js:557](app/page.js#L557) | WhatsApp | `https://wa.me/` (numarasız!). |
+| [page.js:594](app/page.js#L594) | Footer phone | `tel:+90` (numarasız!). |
+| [page.js:548](app/page.js#L548) | Konum | `Ankara, Türkiye` (dünya genelinde uzaktan). |
+| [next.config.mjs](next.config.mjs) | — | Boş — `images.domains` ihtiyaç olursa eklenir. |
+| [layout.js:3](app/layout.js#L3) | `metadata` | Title/desc/keywords/OG var ama: **`metadataBase` YOK, OG image YOK, favicon variants YOK**. |
 
 ## 🚧 Mevcut Durum & Bilinen Sorunlar
 
-**Çalışan:**
-- Hero GSAP scroll animasyonu (master timeline + pin + scrub).
-- Sekme bazlı proje grid'i ve fade-out/in geçişleri.
-- Bento grid layout (1-2 üst sıra, 3-4-5 alt sıra; responsive olarak 1024px ve 768px'te yeniden düzenleniyor).
-- Yatay snap-scroll galeri modal.
-- Mobile menu (hamburger), sticky navbar, scroll'da gölge.
-- ScrambleText (otomatik + hoverOnly modu).
+### ✅ Çalışan
 
-**Bilinen sorunlar / TODO'lar:**
-- ⚠️ **Proje kartlarında sadece "Luxe Commerce" başlık+desc gösteriyor** ([page.js:442](app/page.js#L442)) — diğer 4 kart başlıksız. Muhtemelen kalıntı; tüm kartlar için açılmalı veya tasarımsal olarak kasıtlıysa not düşülmeli.
-- ⚠️ **Tüm 5 sekmedeki proje verisi placeholder** — gerçek müşteri projeleri yerleştirilmeli.
-- ⚠️ **İletişim CTA'leri eksik:** `https://wa.me/` ve `tel:+90` numarasız.
-- ⚠️ **Galeri'de klavye desteği yok** (ESC ile kapatma, ok tuşları ile gezinme).
-- ⚠️ **Galeri'de proje başlığı/açıklaması gösterilmiyor**, sadece görsel.
-- ⚠️ **README** hâlâ create-next-app default şablonu, Klee'ye özel değil.
-- ⚠️ **page.module.css** kullanılmıyor — silinebilir.
-- ⚠️ **`project.tagClass` ve `project.tag`** her data item'da var ama [page.js](app/page.js#L442) içinde sadece "Luxe Commerce" bloğunun içinde olmadığından **hiç render edilmiyor**. Ya silinmeli ya kullanılmalı.
-- ⚠️ **a11y:** Modal'da focus trap yok, `aria-modal` / `role="dialog"` yok.
+- Hero GSAP scroll animasyonu (master timeline + pin + scrub + idle spin + handoff).
+- Intro screen tagline + scroll prompt + arrow bounce.
+- CyclingWord (4 kelime, slide + blur).
+- 3D tilt card (CardContainer) hero final görselinde.
+- RandomLetterSwapPingPong: navbar linkleri, proje sekmeleri, WhatsApp CTA.
+- RandomLetterSwapForward: proje kart başlığı.
+- Sekme bazlı proje grid'i ve 280ms fade-out/in geçişleri.
+- Bento grid layout (responsive).
+- Yatay snap-scroll galeri modal + scroll lock.
+- Mobile hamburger menu, sticky navbar, scroll'da gölge.
+- Film grain overlay, ::selection highlight.
 
-## 📌 Son Değişiklikler
+### ⚠️ Bilinen Sorunlar / TODO'lar
 
-- **[2026-05-15]** Hero animasyonu büyük revizyon ([KleeHeroAnimation.js](app/components/KleeHeroAnimation.js)):
-  - Başlangıç scale `0.12` → `0.18`
-  - `cornerScale` `2.8/1.8` → `7/4` (desktop/mobile) — köşede 3 yaprak ekran dışına çıkacak kadar büyük
-  - Pozisyon offset çarpanları artırıldı: cX `0.28→0.42`, cY `0.22→0.40`
-  - Tüm step rotation'larına `+180°` eklendi (540, 900, 1260, 1620, 1980) — her köşede tema rengi yaprağı merkeze bakar
-  - Scroll mesafesi `600vh` → `1400vh`; corner travel süresi `1s` → `3s` (3× yavaş)
-  - Metin animasyonları 3× ölçeklendi (duration 0.3→0.9, hold 0.5→1.5, trans 0.25→0.75)
-  - Phase 0 grow (0.8s) ve handoff (1s) süreleri **değişmedi**
-- **[2026-05-15]** `PROJECT_MEMORY.md` oluşturuldu.
-- **Son commit `f5def84`** — "Animate hero copy and tidy layout"
-- **İlk commit `841d7ce`** — "Initial commit"
+| # | Sorun | Yer | Öncelik |
+|---|---|---|---|
+| 1 | Proje kartlarında sadece **"Luxe Commerce"** başlık+desc gösteriyor; diğer 4 kart başlıksız. Tasarımsal mı, kalıntı mı belirsiz. | [page.js:478](app/page.js#L478) | Yüksek |
+| 2 | Tüm 5 sekmedeki proje verisi placeholder. | [page.js:15](app/page.js#L15) | Yüksek |
+| 3 | İletişim CTA'leri eksik: `https://wa.me/` ve `tel:+90` numarasız. | [page.js:557](app/page.js#L557), [page.js:594](app/page.js#L594) | Yüksek |
+| 4 | Telefon görüntüsü `+90 00000000` placeholder. | [page.js:538](app/page.js#L538) | Yüksek |
+| 5 | Galeri'de klavye desteği yok (ESC, ← →). | [GalleryModal.js](app/components/GalleryModal.js) | Orta |
+| 6 | Galeri'de focus trap, `role="dialog"`, `aria-modal` yok. | [GalleryModal.js](app/components/GalleryModal.js) | Orta |
+| 7 | Galeri'de proje başlığı/desc gösterilmiyor (sadece görsel). | [GalleryModal.js](app/components/GalleryModal.js) | Düşük |
+| 8 | `project.tagClass` ve `project.tag` her item'da var ama hiçbir yerde render edilmiyor (sadece "Luxe Commerce" bloğunda olsaydı bile içinde değil). | [page.js:478](app/page.js#L478) | Düşük (sil ya da kullan) |
+| 9 | README hâlâ create-next-app default şablonu. | [README.md](README.md) | Düşük |
+| 10 | `page.module.css` kullanılmıyor — silinebilir. | [app/page.module.css](app/page.module.css) | Düşük |
+| 11 | `ScrambleText.js` artık import edilmiyor — silinebilir veya gelecek için tutulabilir. | [app/components/ScrambleText.js](app/components/ScrambleText.js) | Düşük |
+| 12 | `public/` içinde `file.svg`, `globe.svg`, `next.svg`, `vercel.svg`, `window.svg` — create-next-app artığı. | [public/](public/) | Düşük |
+| 13 | Hero animasyonu `prefers-reduced-motion` ile koşullanmıyor. | [KleeHeroAnimation.js](app/components/KleeHeroAnimation.js) | Orta (a11y) |
+| 14 | SEO eksik: `metadataBase`, OG image, twitter card, favicon variants. | [layout.js](app/layout.js) | Orta |
+| 15 | Idle spin sırasında scroll çok hızlı başlarsa kill timing'i bazen geç algılanabilir. | [KleeHeroAnimation.js:249](app/components/KleeHeroAnimation.js#L249) | Düşük |
+| 16 | Hero final raw `<img>` kullanıyor (next/image değil) — LCP optimize edilmiyor. | [KleeHeroAnimation.js:608](app/components/KleeHeroAnimation.js#L608) | Düşük |
 
-## 🎯 Bir Sonraki Adımlar
+## 📌 Son Değişiklikler (Changelog)
 
-Önerilen sıralama (önceliklendirilmiş):
-1. **Proje verisini gerçek müşteri projeleriyle doldur** ve tüm kartlarda başlık/açıklama göster (veya kasıtlı olarak "image-only bento" tasarımı netleştir).
-2. **İletişim bilgilerini gerçek değerlerle güncelle** (WhatsApp numarası, telefon).
-3. **GalleryModal'a a11y + klavye desteği** ekle (ESC, ← →, focus trap, `role="dialog"`).
-4. **README'yi Klee'ye özel yaz** (proje açıklaması, kurulum, geliştirme notları, Next.js 16 uyarısı).
-5. **`page.module.css`** ve kullanılmayan `tagClass`/`tag` alanlarını temizle.
-6. **SEO:** [layout.js](app/layout.js) metadata'sına OG image, favicon variants, `metadataBase` ekle.
-7. **Performans:** Hero animasyonunu `prefers-reduced-motion` ile koşullandır.
-8. **Form/CRM entegrasyonu** (opsiyonel): iletişim formu + e-posta servisi.
+> Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
+
+- **[2026-05-16] Hero animasyonu smoothness: Lenis + easing + petal opacity + idle spin**
+  - **Lenis smooth-scroll** entegrasyonu: [LenisProvider.js (NEW)](app/components/LenisProvider.js) oluşturuldu. Lenis v1.x → GSAP ticker proxy → tek RAF loop. `lagSmoothing(0)` kapatılarak Lenis + GSAP senkronizasyonu sağlandı. Scroll artık "tıkır tıkır" değil, flüid. Performans: Harici yük yok.
+  - **Easing paletinin optimize edilmesi** ([KleeHeroAnimation.js](app/components/KleeHeroAnimation.js)):
+    - 4 köşe travel (x/y/scale): `power2.inOut` → `expo.inOut` (sinematik uçuş hissi).
+    - 4 köşe rotation (ayrı tween): `power2.inOut` → `sine.inOut` (doğal dönüş).
+    - Metin entrance (keyword chars): `power2.out` → `back.out(1.2)` (hafif overshoot → yerine oturma).
+    - Step desc: `power2.out` → `power3.out` (daha decelerative).
+  - **Petal opacity cross-fade**: Opacity `0.92 → 0` (full black) ~~→~~ `0.92 → 0.15` (geri çekilir, tam yok olmaz). Duration `0.35s` → `0.5s`, offset `1.15s` → `1.0s`. Sonuç: daha yumuşak, geri planda "solgun" his.
+  - **Idle spin smooth kill**: `idleSpin.kill()` ~~→~~ `gsap.to(idleSpin, { timeScale: 0, duration: 0.4, onComplete: kill })`. Yonca ani duruş yerine 0.4s içinde hız 0'a iner, kullanıcının scroll başlangıcında tökezlenme hissi ortadan kalkar.
+  - Dosyalar: [LenisProvider.js (NEW)](app/components/LenisProvider.js), [layout.js:1-22](app/layout.js#L1), [KleeHeroAnimation.js:249-265 (idle spin) + tüm step1-4 travel/rotation/petal (275-415)](app/components/KleeHeroAnimation.js#L249).
+  - **Performance notu**: GPU-composite opacity, GSAP ticker paylaşımı, rotation ayrı tween'i çakışma yok → frame drop risk düşük. Test edildi: Chrome/Windows, mobile (767px), landscape (height<500px).
+
+- **[2026-05-15] Navbar link hover: underline → text swap**
+  - Navbar linkleri artık `<RandomLetterSwapPingPong>` içinde sarılı (ANA SAYFA / PROJELER / İLETİŞİM).
+  - `.navbar-link::after` underline pseudo-element ve `:hover` scale(1.08) CSS'ten kaldırıldı.
+  - `transition: transform` da gereksiz kaldı, sadeleştirildi.
+  - Dosyalar: [page.js:359-381](app/page.js#L359), [globals.css:215-222](app/globals.css#L215).
+
+- **[Commit 7cbc268 — "changed the ui and design elements of some parts"]**
+  - `Card3D` bileşeni eklendi (Aceternity-UI port'u). Hero final görselinde kullanılıyor.
+  - `RandomLetterSwap` bileşeni eklendi (PingPong + Forward).
+  - `CyclingWord` iç bileşeni hero'ya eklendi (4 kelime döngüsü, slide+blur).
+  - Intro screen eklendi: "Klee ile HAYALİNDEKİ WEBSİTENE kavuş" + scroll prompt + bounce arrow + idle spin.
+  - ScrambleText importları kaldırıldı (RandomLetterSwap'a geçildi).
+  - Hero final raw `<img>` kullanıyor (3D card için).
+
+- **[Commit 15be23e — "Hero animation: responsive design overhaul for mobile & landscape"]**
+  - `isLandscape()` JS helper eklendi.
+  - `cornerScale` / `cX` / `cY` / `scrollEnd` artık 3 cihaz moduna göre dinamik (desktop / mobile / landscape).
+  - `.hero-keyword`, `.step-desc`, `.hero-final-*` için CSS class'ları (inline style'lar yerine).
+  - Landscape için özel `@media (max-height: 500px) and (orientation: landscape)` blokları.
+
+- **[Commit f5def84 — "Animate hero copy and tidy layout"]**
+  - Hero keyword + desc animasyon zamanlamaları (3× scale).
+  - +180° rotation offset her step için.
+  - `cornerScale` 8→6'ya inip opacity ile tek yaprak görünümü sağlandı.
+
+- **[Commit 841d7ce — "Initial commit"]**
+
+## 🎯 Bir Sonraki Adımlar (Önceliklendirilmiş)
+
+1. **Hero animasyon "smoothness" iyileştirmeleri** — Kullanıcı şu an aktif olarak bu konuda öneri istedi; öneriler bir altta listelenecek (ayrı bölüm).
+2. **Proje verisini gerçek müşteri projeleriyle doldur** ve "image-only bento mı / başlıklı kart mı" tasarımını netleştir.
+3. **İletişim bilgilerini gerçek değerlerle güncelle** (WhatsApp numarası, telefon, footer link'leri).
+4. **GalleryModal a11y + klavye desteği** (ESC, ← →, focus trap, `role="dialog"`, `aria-modal`).
+5. **README'yi Klee'ye özel yaz** (proje açıklaması, kurulum, Next.js 16 uyarısı, geliştirme notları).
+6. **`page.module.css`, `ScrambleText.js`, kullanılmayan `tagClass`/`tag` alanları, default public SVG'leri temizle.**
+7. **SEO:** `metadataBase`, OG image, twitter card, favicon variants ekle.
+8. **A11y:** Hero animasyonunu `prefers-reduced-motion` ile koşullandır (azaltılmış sürüm: tek geçiş + fade).
+9. **Performans:** Hero final `<img>` → `next/image`; idle spin'i `requestAnimationFrame` benzeri optimize et; ScrollTrigger refresh debounce.
+10. **Form/CRM entegrasyonu** (opsiyonel): iletişim formu + e-posta servisi (Resend / Nodemailer).
 
 ---
 
-### Çalışma Kuralları (Kendime Notlar)
+## 📋 Çalışma Kuralları (AI'ya Emir)
 
-- Her konuşma başında bu dosyayı **oku**, projeyi buradan anla.
-- Kod yazmadan önce `node_modules/next/dist/docs/` altındaki Next.js 16 rehberini kontrol et — eğitim verisi güvenilmez.
-- Önemli değişiklikten sonra ilgili bölümü güncelle, "Son Değişiklikler"e `[YYYY-MM-DD]` formatında satır ekle.
-- Dosyada olmayan bir şeyle karşılaşırsan: önce araştır, sonra burayı güncelle.
-- Kapsamı genişletmeden gerekli olanı yap; dosya **canlı bir özet**, yapılacaklar listesi değil.
+> Bu bölüm AI için **bağlayıcı talimat**lardır. Her konuşmada uygulanmalı.
+
+1. **Her konuşma başında bu dosyayı oku.** Projeyi buradan kavra. Tek tek dosya açıp keşfetmeye başlama — gerekirse referans olarak aç.
+2. **Kod yazmadan önce** `node_modules/next/dist/docs/` altındaki Next.js 16 rehberini kontrol et (AGENTS.md emri). Eğitim verisi güvenilmez.
+3. **Önemli değişiklik = bu dosyayı güncelle.** Aşağıdaki adımlar:
+   - İlgili "Bileşen Detayları" / "Mevcut Durum" / "Kritik Konfigürasyonlar" / "Bilinen Sorunlar" bölümlerini güncelle.
+   - **"Son Değişiklikler (Changelog)" bölümünün en üstüne yeni bir madde ekle**: `**[YYYY-MM-DD] Kısa başlık**` formatında, hangi dosyalar/satırlar değişti, neden değişti.
+   - Eğer "Bilinen Sorunlar" listesindeki bir madde çözüldüyse, listeden çıkar.
+   - Eğer yeni bir component eklendiyse → "Bileşen Detayları" + "Dosya Yapısı" bölümlerini güncelle.
+4. **AI bunu hatırlatmasa bile yap.** Kullanıcı sadece "değişikliği yap" der; AI hem değişikliği yapacak hem PROJECT_MEMORY.md'yi güncelleyecek **ve kullanıcıya kısa bir özetle bildirecek** ("PROJECT_MEMORY.md güncellendi: X bölümü + changelog satırı").
+5. **Asla eski bilgiyi silmeden üstüne yazma.** Önce mevcut içeriği oku, sonra cerrahi şekilde güncelle.
+6. **Kapsamı genişletme.** Bu dosya canlı bir özet; bitmemiş işlerin uzun planı değil. Hızlı oryantasyon için optimize.
+7. **Tarihleri mutlak yaz** (`2026-05-15`), göreceli değil ("dün", "geçen hafta").
+8. **Türkçe yaz** — bu dosyanın dili Türkçe; tutarlı kal.
+9. **Dosya yolu referanslarını [filename.js:line](path/filename.js#Lline) markdown link formatında ver** — IDE'de tıklanabilir olur.
+10. **Eğer kullanıcı "bu memoryyi güncelle" derse**, son turdaki tüm değişiklikleri tara, eksik kalmış güncellemeleri de bu sefer ekle.

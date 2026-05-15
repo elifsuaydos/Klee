@@ -1,4 +1,5 @@
 import "./globals.css";
+import LenisProvider from "./components/LenisProvider";
 
 export const metadata = {
   title: "Klee — Web Development Agency",
@@ -15,7 +16,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="tr">
-      <body>{children}</body>
+      <body>
+        <LenisProvider>{children}</LenisProvider>
+      </body>
     </html>
   );
 }
