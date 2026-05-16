@@ -841,12 +841,9 @@ export default function KleeHeroAnimation() {
         aria-hidden="true"
       >
         <h2 ref={introTextRef} className="hero-intro-text">
-          <SplitTextChars text="Klee ile " />
-          <span className="hero-intro-emphasis">
-            <SplitTextChars text="Hayalindeki Websitene" />
-          </span>
-          <br/>
-          <SplitTextChars text=" kavuş." />
+          <SplitTextChars text="Klee ile hayalindeki" />
+          <br />
+          <SplitTextChars text="websitesine kavuş." />
         </h2>
       </div>
       {/* ── Single clover SVG (all petals as one unit) ──────────────── */}

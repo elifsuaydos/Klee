@@ -150,27 +150,28 @@ const PETAL_PATH =
    ================================================ */
 function TopBar({ onMenuOpen }) {
   return (
-    <header className="top-bar" id="top-bar">
-      {/* Left: Hamburger menu trigger */}
-      <button
-        className="menu-trigger"
-        onClick={onMenuOpen}
-        aria-label="Menüyü aç"
-        id="menu-trigger-btn"
-      >
-        <span className="menu-trigger-icon" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </span>
-        <span className="menu-trigger-label">
-          <RandomLetterSwapPingPong label="MENU" staggerDuration={0.025} />
-        </span>
-      </button>
+    <>
+      {/* Blend-mode header — only the menu trigger is inside so only it inverts */}
+      <header className="top-bar" id="top-bar">
+        <button
+          className="menu-trigger"
+          onClick={onMenuOpen}
+          aria-label="Menüyü aç"
+          id="menu-trigger-btn"
+        >
+          <span className="menu-trigger-icon" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span className="menu-trigger-label">
+            <RandomLetterSwapPingPong label="MENU" staggerDuration={0.025} />
+          </span>
+        </button>
+      </header>
 
-      {/* Center: Klee branding */}
+      {/* Clover only — no blend-mode, positioned at center-left of brand slot */}
       <div className="top-bar-brand" id="top-bar-brand">
-        {/* Hidden clover logo — hero clover animates here */}
         <svg
           className="navbar-clover-logo"
           viewBox="0 0 100 100"
@@ -195,12 +196,13 @@ function TopBar({ onMenuOpen }) {
             </g>
           </g>
         </svg>
-        <span className="top-bar-klee-text">Klee</span>
       </div>
 
-      {/* Right: empty spacer to balance the flex layout */}
-      <div className="top-bar-right" aria-hidden="true" />
-    </header>
+      {/* Klee text in its own fixed stacking-context root with mix-blend-mode — clover unaffected */}
+      <div className="top-bar-klee-blend">
+        <span className="top-bar-klee-text">Klee</span>
+      </div>
+    </>
   );
 }
 
@@ -292,11 +294,24 @@ function MenuOverlay({ isOpen, onClose }) {
           </span>
         </a>
         <a
+          href="#about"
+          className="menu-overlay-link"
+          onClick={(e) => handleNavClick(e, "about")}
+        >
+          <span className="menu-overlay-link-num">03</span>
+          <span className="menu-overlay-link-label">
+            <RandomLetterSwapPingPong
+              label="Hakkımızda"
+              staggerDuration={0.025}
+            />
+          </span>
+        </a>
+        <a
           href="#contact"
           className="menu-overlay-link"
           onClick={(e) => handleNavClick(e, "contact")}
         >
-          <span className="menu-overlay-link-num">03</span>
+          <span className="menu-overlay-link-num">04</span>
           <span className="menu-overlay-link-label">
             <RandomLetterSwapPingPong
               label="İletişim"
@@ -370,6 +385,46 @@ function ScrollProgress() {
 // HeroSection is now handled by KleeHeroAnimation (GSAP scroll-triggered component)
 
 /* ================================================
+   ABOUT SECTION
+   ================================================ */
+function AboutSection() {
+  return (
+    <section className="about" id="about">
+      <svg
+        className="about-clover-bg"
+        viewBox="0 0 200 140"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+        width="100%"
+        height="100%"
+        aria-hidden="true"
+      >
+        <path
+          d="M 30 0 L 170 0 Q 200 0 200 30 L 200 110 Q 200 140 170 140 L 30 140 Q 0 140 0 110 L 0 30 Q 0 0 30 0 Z
+             M 0 70 Q 30 50 30 0 L 0 0 Z
+             M 200 70 Q 170 50 170 0 L 200 0 Z
+             M 0 70 Q 30 90 30 140 L 0 140 Z
+             M 200 70 Q 170 90 170 140 L 200 140 Z"
+          fill="#000000"
+          fillRule="evenodd"
+        />
+      </svg>
+
+      <div className="container">
+        <div className="about-content">
+          <h2 className="about-title">Hakkımızda</h2>
+          <p className="about-description">
+            Ankara merkezli, dünya geneline uzaktan hizmet veren bir web
+            geliştirme ajansıyız. Stratejik düşünce ve yaratıcı mühendislikle
+            markalar için dijital ürünler tasarlıyor, hayata geçiriyoruz.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ================================================
    PROJECTS SECTION
    ================================================ */
 function ProjectsSection() {
@@ -407,22 +462,21 @@ function ProjectsSection() {
       </svg>
 
       <div className="container">
-        {/* Section header */}
-        <div className="projects-header fade-in-up">
+        <div className="projects-header">
           <h2 className="projects-title">Seçilmiş Çalışmalar</h2>
           <p className="projects-description">
             Stratejik düşünce ve yaratıcı mühendislikle hayata geçirdiğimiz
             projelerden bir seçki.
           </p>
         </div>
+      </div>
 
-        {/* Hover-expand image gallery */}
-        <div className="fade-in-up">
-          <ImageGallery
-            items={PROJECTS_GALLERY}
-            onItemClick={handleItemClick}
-          />
-        </div>
+      {/* Gallery breaks out of container to span full section width */}
+      <div className="projects-gallery-full">
+        <ImageGallery
+          items={PROJECTS_GALLERY}
+          onItemClick={handleItemClick}
+        />
       </div>
 
       <GalleryModal
@@ -444,7 +498,7 @@ function ContactSection() {
     <section className="contact" id="contact">
       <div className="container">
         <div className="contact-inner">
-          <div className="fade-in-up">
+          <div>
             <h2 className="contact-header-title">
               Geleceği birlikte
               <br />
@@ -456,7 +510,7 @@ function ContactSection() {
             </p>
           </div>
 
-          <div className="contact-info fade-in-up">
+          <div className="contact-info">
             <div className="contact-info-list">
               <div className="contact-info-item">
                 <div className="contact-info-icon">
@@ -613,6 +667,7 @@ export default function Home() {
       <main>
         <KleeHeroAnimation />
         <ProjectsSection />
+        <AboutSection />
         <ContactSection />
       </main>
       <Footer />

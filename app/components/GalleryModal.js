@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
+import { RandomLetterSwapPingPong } from "./RandomLetterSwap";
 
 export default function GalleryModal({
   isOpen,
@@ -116,7 +117,7 @@ export default function GalleryModal({
         >
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
-        <span>Geri dön</span>
+        <RandomLetterSwapPingPong label="Geri dön" staggerDuration={0.022} />
       </button>
 
       {/* Top-right: Project info button */}
@@ -126,22 +127,19 @@ export default function GalleryModal({
         aria-label="Proje bilgisi"
         aria-expanded={infoPanelOpen}
       >
+        {/* Hamburger icon — matches the menu trigger's 3-bar style */}
         <svg
-          viewBox="0 0 24 24"
+          viewBox="0 0 18 11"
+          width="18"
+          height="11"
           fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          aria-hidden="true"
         >
-          <line x1="8" y1="6" x2="21" y2="6" />
-          <line x1="8" y1="12" x2="21" y2="12" />
-          <line x1="8" y1="18" x2="21" y2="18" />
-          <line x1="3" y1="6" x2="3.01" y2="6" />
-          <line x1="3" y1="12" x2="3.01" y2="12" />
-          <line x1="3" y1="18" x2="3.01" y2="18" />
+          <rect y="0" width="18" height="1.5" rx="0.75" fill="currentColor" />
+          <rect y="4.75" width="18" height="1.5" rx="0.75" fill="currentColor" />
+          <rect y="9.5" width="18" height="1.5" rx="0.75" fill="currentColor" />
         </svg>
-        <span>Proje bilgisi</span>
+        <RandomLetterSwapPingPong label="Proje bilgisi" staggerDuration={0.018} />
       </button>
 
       {/* Full-screen image/video display */}
