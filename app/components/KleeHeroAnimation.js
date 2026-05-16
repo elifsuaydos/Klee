@@ -52,7 +52,12 @@ function CyclingWord() {
       if (i === 0) {
         gsap.set(el, { y: "0%", opacity: 1, filter: "blur(0px)", scale: 1 });
       } else {
-        gsap.set(el, { y: "60%", opacity: 0, filter: "blur(8px)", scale: 0.92 });
+        gsap.set(el, {
+          y: "60%",
+          opacity: 0,
+          filter: "blur(8px)",
+          scale: 0.92,
+        });
       }
     });
   }, []);
@@ -67,10 +72,18 @@ function CyclingWord() {
 
       const currentEl = wordRefs.current[current];
       const nextEl = wordRefs.current[next];
-      if (!currentEl || !nextEl) { isAnimating.current = false; return; }
+      if (!currentEl || !nextEl) {
+        isAnimating.current = false;
+        return;
+      }
 
       // Prep next word below
-      gsap.set(nextEl, { y: "60%", opacity: 0, filter: "blur(8px)", scale: 0.92 });
+      gsap.set(nextEl, {
+        y: "60%",
+        opacity: 0,
+        filter: "blur(8px)",
+        scale: 0.92,
+      });
 
       const tl = gsap.timeline({
         onComplete: () => {
@@ -91,14 +104,18 @@ function CyclingWord() {
       });
 
       // Enter: next word slides up into place, clears blur
-      tl.to(nextEl, {
-        y: "0%",
-        opacity: 1,
-        filter: "blur(0px)",
-        scale: 1,
-        duration: 0.6,
-        ease: "power3.out",
-      }, "-=0.15"); // slight overlap for snappiness
+      tl.to(
+        nextEl,
+        {
+          y: "0%",
+          opacity: 1,
+          filter: "blur(0px)",
+          scale: 1,
+          duration: 0.6,
+          ease: "power3.out",
+        },
+        "-=0.15",
+      ); // slight overlap for snappiness
     }, 2400);
 
     return () => clearInterval(id);
@@ -112,13 +129,15 @@ function CyclingWord() {
         overflow: "hidden",
         verticalAlign: "bottom",
         /* Match longest word so layout doesn't jump */
-        minWidth: `${Math.max(...CYCLE_WORDS.map(w => w.length))}ch`,
+        minWidth: `${Math.max(...CYCLE_WORDS.map((w) => w.length))}ch`,
       }}
     >
       {CYCLE_WORDS.map((word, i) => (
         <span
           key={word}
-          ref={el => { wordRefs.current[i] = el; }}
+          ref={(el) => {
+            wordRefs.current[i] = el;
+          }}
           style={{
             position: i === 0 ? "relative" : "absolute",
             top: 0,
@@ -161,27 +180,43 @@ export default function KleeHeroAnimation() {
   const bluePetalRef = useRef(null);
   const greenPetalRef = useRef(null);
 
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      delete document.body.dataset.heroComplete;
+    }
+    return () => {
+      if (typeof document !== "undefined") {
+        delete document.body.dataset.heroComplete;
+      }
+    };
+  }, []);
+
   useGSAP(
     () => {
       const section = sectionRef.current;
       const clover = cloverRef.current;
       const introScreen = introScreenRef.current;
 
-      const navbar = document.querySelector("#navbar");
-      if (navbar) {
-        gsap.set(navbar, { opacity: 0, pointerEvents: "none" });
-      }
+      const topBar = document.querySelector("#top-bar");
+      let heroComplete = false;
 
       const isMobile = () => section.clientWidth < 768;
       const isLandscape = () =>
-        section.clientWidth > section.clientHeight && section.clientHeight < 500;
+        section.clientWidth > section.clientHeight &&
+        section.clientHeight < 500;
 
       // ── Intro scale: clover starts BIG and semi-transparent ──────
       const introScale = () => {
         if (isLandscape()) return 1.0;
         return isMobile() ? 1.3 : 1.86;
       };
-      gsap.set(clover, { scale: introScale(), x: 0, y: 0, opacity: 1, rotation: 0 });
+      gsap.set(clover, {
+        scale: introScale(),
+        x: 0,
+        y: 0,
+        opacity: 1,
+        rotation: 0,
+      });
 
       // Independent idle spin (runs until first scroll)
       const idleSpin = gsap.to(clover, {
@@ -215,16 +250,20 @@ export default function KleeHeroAnimation() {
       const cX = (side) => {
         let mult;
         if (isLandscape()) mult = 0.38;
-        else if (isMobile()) mult = 0.40;
-        else mult = 0.50;
-        return side === "left" ? -(section.clientWidth * mult) : section.clientWidth * mult;
+        else if (isMobile()) mult = 0.4;
+        else mult = 0.5;
+        return side === "left"
+          ? -(section.clientWidth * mult)
+          : section.clientWidth * mult;
       };
       const cY = (side) => {
         let mult;
         if (isLandscape()) mult = 0.36;
         else if (isMobile()) mult = 0.42;
         else mult = 0.48;
-        return side === "top" ? -(section.clientHeight * mult) : section.clientHeight * mult;
+        return side === "top"
+          ? -(section.clientHeight * mult)
+          : section.clientHeight * mult;
       };
       const scrollEnd = () => {
         if (isLandscape()) return "900vh";
@@ -247,6 +286,18 @@ export default function KleeHeroAnimation() {
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
+            const isComplete = self.progress >= 0.999;
+            if (
+              isComplete !== heroComplete &&
+              typeof document !== "undefined"
+            ) {
+              heroComplete = isComplete;
+              if (isComplete) {
+                document.body.dataset.heroComplete = "true";
+              } else {
+                delete document.body.dataset.heroComplete;
+              }
+            }
             // Smooth idle spin kill once scrolling begins
             if (self.progress > 0.001 && idleSpin.isActive()) {
               gsap.to(idleSpin, {
@@ -258,166 +309,286 @@ export default function KleeHeroAnimation() {
             }
             // Fade out intro screen (tagline + scroll prompt)
             if (introScreen && self.progress > 0.001) {
-              gsap.to(introScreen, { opacity: 0, duration: 0.4, ease: "power2.out", overwrite: true });
+              gsap.to(introScreen, {
+                opacity: 0,
+                duration: 0.4,
+                ease: "power2.out",
+                overwrite: true,
+              });
             } else if (introScreen && self.progress <= 0.001) {
-              gsap.to(introScreen, { opacity: 1, duration: 0.4, ease: "power2.out", overwrite: true });
+              gsap.to(introScreen, {
+                opacity: 1,
+                duration: 0.4,
+                ease: "power2.out",
+                overwrite: true,
+              });
             }
           },
         },
       });
 
       // ── Phase 0: Transition from intro state → full-opacity center ─────
-      master.to(clover, {
-        scale: centerScale,
-        duration: 0.8,
-        ease: "power2.out",
-      }, "grow");
+      master.to(
+        clover,
+        {
+          scale: centerScale,
+          duration: 0.8,
+          ease: "power2.out",
+        },
+        "grow",
+      );
 
       // ── Step 1: Top-left — Red / TILSIM ───────────────────────────────
-      master.to(clover, {
-        x: () => cX("left"),
-        y: () => cY("top"),
-        scale: () => cornerScale(),
-        duration: 3,
-        ease: "expo.inOut",
-      }, "step1");
-      master.to(clover, {
-        rotation: 540,
-        duration: 3,
-        ease: "sine.inOut",
-      }, "step1");
+      master.to(
+        clover,
+        {
+          x: () => cX("left"),
+          y: () => cY("top"),
+          scale: () => cornerScale(),
+          duration: 3,
+          ease: "expo.inOut",
+        },
+        "step1",
+      );
+      master.to(
+        clover,
+        {
+          rotation: 540,
+          duration: 3,
+          ease: "sine.inOut",
+        },
+        "step1",
+      );
       master.to(
         step1Ref.current.querySelectorAll(".char"),
-        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "back.out(1.2)" },
-        "step1+=1.2"
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.9,
+          stagger: { amount: 0.45 },
+          ease: "back.out(1.2)",
+        },
+        "step1+=1.2",
       );
       master.to(
         step1Ref.current.querySelector(".step-desc"),
         { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
-        "step1+=1.5"
+        "step1+=1.5",
       );
       master.to({}, { duration: 1.5 }, "step1-hold");
-      master.to([yp, bp, gp], { opacity: 0.15, duration: 0.5, ease: "power2.inOut" }, "step1-hold");
-      master.to([yp, bp, gp], { opacity: 0.92, duration: 0.5, ease: "power2.inOut" }, "step1-hold+=1.0");
+      master.to(
+        [yp, bp, gp],
+        { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
+        "step1-hold",
+      );
+      master.to(
+        [yp, bp, gp],
+        { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
+        "step1-hold+=1.0",
+      );
 
       // ── Transition 1→2 ───────────────────────────────────────────────
       master.to(
         step1Ref.current.querySelectorAll(".char"),
-        { opacity: 0, y: -40, duration: 0.75, stagger: { amount: 0.3 }, ease: "power2.in" },
-        "trans1"
+        {
+          opacity: 0,
+          y: -40,
+          duration: 0.75,
+          stagger: { amount: 0.3 },
+          ease: "power2.in",
+        },
+        "trans1",
       );
       master.to(
         step1Ref.current.querySelector(".step-desc"),
         { opacity: 0, y: -20, duration: 0.75, ease: "power2.in" },
-        "trans1"
+        "trans1",
       );
 
       // ── Step 2: Bottom-right — Green / VİZYON ────────────────────────
-      master.to(clover, {
-        x: () => cX("right"),
-        y: () => cY("bottom"),
-        scale: () => cornerScale(),
-        duration: 3,
-        ease: "expo.inOut",
-      }, "step2");
-      master.to(clover, {
-        rotation: 900,
-        duration: 3,
-        ease: "sine.inOut",
-      }, "step2");
+      master.to(
+        clover,
+        {
+          x: () => cX("right"),
+          y: () => cY("bottom"),
+          scale: () => cornerScale(),
+          duration: 3,
+          ease: "expo.inOut",
+        },
+        "step2",
+      );
+      master.to(
+        clover,
+        {
+          rotation: 900,
+          duration: 3,
+          ease: "sine.inOut",
+        },
+        "step2",
+      );
       master.to(
         step2Ref.current.querySelectorAll(".char"),
-        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "back.out(1.2)" },
-        "step2+=1.2"
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.9,
+          stagger: { amount: 0.45 },
+          ease: "back.out(1.2)",
+        },
+        "step2+=1.2",
       );
       master.to(
         step2Ref.current.querySelector(".step-desc"),
         { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
-        "step2+=1.5"
+        "step2+=1.5",
       );
       master.to({}, { duration: 1.5 }, "step2-hold");
-      master.to([rp, yp, bp], { opacity: 0.15, duration: 0.5, ease: "power2.inOut" }, "step2-hold");
-      master.to([rp, yp, bp], { opacity: 0.92, duration: 0.5, ease: "power2.inOut" }, "step2-hold+=1.0");
+      master.to(
+        [rp, yp, bp],
+        { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
+        "step2-hold",
+      );
+      master.to(
+        [rp, yp, bp],
+        { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
+        "step2-hold+=1.0",
+      );
 
       // ── Transition 2→3 ───────────────────────────────────────────────
       master.to(
         step2Ref.current.querySelectorAll(".char"),
-        { opacity: 0, y: -40, duration: 0.75, stagger: { amount: 0.3 }, ease: "power2.in" },
-        "trans2"
+        {
+          opacity: 0,
+          y: -40,
+          duration: 0.75,
+          stagger: { amount: 0.3 },
+          ease: "power2.in",
+        },
+        "trans2",
       );
       master.to(
         step2Ref.current.querySelector(".step-desc"),
         { opacity: 0, y: -20, duration: 0.75, ease: "power2.in" },
-        "trans2"
+        "trans2",
       );
 
       // ── Step 3: Bottom-left — Blue / TUTKU ───────────────────────────
-      master.to(clover, {
-        x: () => cX("left"),
-        y: () => cY("bottom"),
-        scale: () => cornerScale(),
-        duration: 3,
-        ease: "expo.inOut",
-      }, "step3");
-      master.to(clover, {
-        rotation: 1260,
-        duration: 3,
-        ease: "sine.inOut",
-      }, "step3");
+      master.to(
+        clover,
+        {
+          x: () => cX("left"),
+          y: () => cY("bottom"),
+          scale: () => cornerScale(),
+          duration: 3,
+          ease: "expo.inOut",
+        },
+        "step3",
+      );
+      master.to(
+        clover,
+        {
+          rotation: 1260,
+          duration: 3,
+          ease: "sine.inOut",
+        },
+        "step3",
+      );
       master.to(
         step3Ref.current.querySelectorAll(".char"),
-        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "back.out(1.2)" },
-        "step3+=1.2"
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.9,
+          stagger: { amount: 0.45 },
+          ease: "back.out(1.2)",
+        },
+        "step3+=1.2",
       );
       master.to(
         step3Ref.current.querySelector(".step-desc"),
         { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
-        "step3+=1.5"
+        "step3+=1.5",
       );
       master.to({}, { duration: 1.5 }, "step3-hold");
-      master.to([rp, yp, gp], { opacity: 0.15, duration: 0.5, ease: "power2.inOut" }, "step3-hold");
-      master.to([rp, yp, gp], { opacity: 0.92, duration: 0.5, ease: "power2.inOut" }, "step3-hold+=1.0");
+      master.to(
+        [rp, yp, gp],
+        { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
+        "step3-hold",
+      );
+      master.to(
+        [rp, yp, gp],
+        { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
+        "step3-hold+=1.0",
+      );
 
       // ── Transition 3→4 ───────────────────────────────────────────────
       master.to(
         step3Ref.current.querySelectorAll(".char"),
-        { opacity: 0, y: -40, duration: 0.75, stagger: { amount: 0.3 }, ease: "power2.in" },
-        "trans3"
+        {
+          opacity: 0,
+          y: -40,
+          duration: 0.75,
+          stagger: { amount: 0.3 },
+          ease: "power2.in",
+        },
+        "trans3",
       );
       master.to(
         step3Ref.current.querySelector(".step-desc"),
         { opacity: 0, y: -20, duration: 0.75, ease: "power2.in" },
-        "trans3"
+        "trans3",
       );
 
       // ── Step 4: Top-right — Yellow / KIVILCIM ────────────────────────
-      master.to(clover, {
-        x: () => cX("right"),
-        y: () => cY("top"),
-        scale: () => cornerScale(),
-        duration: 3,
-        ease: "expo.inOut",
-      }, "step4");
-      master.to(clover, {
-        rotation: 1620,
-        duration: 3,
-        ease: "sine.inOut",
-      }, "step4");
+      master.to(
+        clover,
+        {
+          x: () => cX("right"),
+          y: () => cY("top"),
+          scale: () => cornerScale(),
+          duration: 3,
+          ease: "expo.inOut",
+        },
+        "step4",
+      );
+      master.to(
+        clover,
+        {
+          rotation: 1620,
+          duration: 3,
+          ease: "sine.inOut",
+        },
+        "step4",
+      );
       master.to(
         step4Ref.current.querySelectorAll(".char"),
-        { opacity: 1, y: 0, duration: 0.9, stagger: { amount: 0.45 }, ease: "back.out(1.2)" },
-        "step4+=1.2"
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.9,
+          stagger: { amount: 0.45 },
+          ease: "back.out(1.2)",
+        },
+        "step4+=1.2",
       );
       master.to(
         step4Ref.current.querySelector(".step-desc"),
         { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
-        "step4+=1.5"
+        "step4+=1.5",
       );
       master.to({}, { duration: 1.5 }, "step4-hold");
-      master.to([rp, bp, gp], { opacity: 0.15, duration: 0.5, ease: "power2.inOut" }, "step4-hold");
-      master.to([rp, bp, gp], { opacity: 0.92, duration: 0.5, ease: "power2.inOut" }, "step4-hold+=1.0");
+      master.to(
+        [rp, bp, gp],
+        { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
+        "step4-hold",
+      );
+      master.to(
+        [rp, bp, gp],
+        { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
+        "step4-hold+=1.0",
+      );
 
-      // ── Phase 5: Converge to navbar logo (speed unchanged) ────────────
+      // ── Phase 5: Converge to top-bar clover logo (top center) ────────
       const navLogoNode = document.querySelector(".navbar-clover-logo");
       const getNavX = () => {
         if (!navLogoNode) return 0;
@@ -432,27 +603,37 @@ export default function KleeHeroAnimation() {
 
       master.to(
         step4Ref.current.querySelectorAll(".char"),
-        { opacity: 0, y: -40, duration: 0.2, stagger: { amount: 0.1 }, ease: "power2.in" },
-        "converge"
+        {
+          opacity: 0,
+          y: -40,
+          duration: 0.2,
+          stagger: { amount: 0.1 },
+          ease: "power2.in",
+        },
+        "converge",
       );
       master.to(
         step4Ref.current.querySelector(".step-desc"),
         { opacity: 0, y: -20, duration: 0.2, ease: "power2.in" },
-        "converge"
+        "converge",
       );
-      master.to(clover, {
-        x: getNavX,
-        y: getNavY,
-        scale: 32 / 280,
-        rotation: 1980,
-        duration: 2.5,
-        ease: "power2.inOut",
-      }, "converge");
+      master.to(
+        clover,
+        {
+          x: getNavX,
+          y: getNavY,
+          scale: 28 / 280,
+          rotation: 1980,
+          duration: 2.5,
+          ease: "power2.inOut",
+        },
+        "converge",
+      );
       master.fromTo(
         finalContentRef.current,
         { opacity: 0, y: 40 },
         { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
-        "converge+=1.8"
+        "converge+=1.8",
       );
 
       // ── Phase 6: Handoff ──────────────────────────────────────────────
@@ -460,15 +641,15 @@ export default function KleeHeroAnimation() {
       if (navLogoNode) {
         master.to(navLogoNode, { opacity: 1, duration: 0.05 }, "handoff");
       }
-      if (navbar) {
+      if (topBar) {
         master.to(
-          navbar,
+          topBar,
           { opacity: 1, pointerEvents: "auto", duration: 0.1 },
-          "handoff"
+          "handoff",
         );
       }
     },
-    { scope: sectionRef }
+    { scope: sectionRef },
   );
 
   return (
@@ -486,26 +667,15 @@ export default function KleeHeroAnimation() {
       }}
       aria-label="Klee animated hero"
     >
-      {/* ── Intro screen: tagline + scroll prompt (clover IS the GSAP clover below) */}
-      <div ref={introScreenRef} className="hero-intro-screen" aria-hidden="true">
+      {/* ── Intro screen: tagline only (no scroll prompt — replaced by scroll progress bar) */}
+      <div
+        ref={introScreenRef}
+        className="hero-intro-screen"
+        aria-hidden="true"
+      >
         <h2 ref={introTextRef} className="hero-intro-text">
           <SplitTextChars text="Klee ile HAYALİNDEKİ WEBSİTENE kavuş" />
         </h2>
-        <div className="scroll-prompt">
-          <span className="scroll-prompt-text">aşağı kaydır</span>
-          <svg
-            className="scroll-prompt-arrow"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
-        </div>
       </div>
       {/* ── Single clover SVG (all petals as one unit) ──────────────── */}
       <svg
@@ -567,7 +737,10 @@ export default function KleeHeroAnimation() {
           <h2 className="hero-keyword" style={{ top: "10vh", left: "5vw" }}>
             <SplitTextChars text="TILSIM" />
           </h2>
-          <div className="step-desc step-desc--right" style={{ opacity: 0, transform: "translateY(20px)" }}>
+          <div
+            className="step-desc step-desc--right"
+            style={{ opacity: 0, transform: "translateY(20px)" }}
+          >
             Klee ile çalışanların yakalayacağı o eşsiz dijital başarı şansı.
           </div>
         </div>
@@ -577,7 +750,10 @@ export default function KleeHeroAnimation() {
           <h2 className="hero-keyword" style={{ bottom: "10vh", right: "5vw" }}>
             <SplitTextChars text="VİZYON" />
           </h2>
-          <div className="step-desc step-desc--left" style={{ opacity: 0, transform: "translateY(20px)" }}>
+          <div
+            className="step-desc step-desc--left"
+            style={{ opacity: 0, transform: "translateY(20px)" }}
+          >
             Müşterinin hayali ve Klee&apos;nin tasarım gücü.
           </div>
         </div>
@@ -587,7 +763,10 @@ export default function KleeHeroAnimation() {
           <h2 className="hero-keyword" style={{ bottom: "10vh", left: "5vw" }}>
             <SplitTextChars text="TUTKU" />
           </h2>
-          <div className="step-desc step-desc--right" style={{ opacity: 0, transform: "translateY(20px)" }}>
+          <div
+            className="step-desc step-desc--right"
+            style={{ opacity: 0, transform: "translateY(20px)" }}
+          >
             Kodlamaya ve detaylara verilen önem.
           </div>
         </div>
@@ -597,7 +776,10 @@ export default function KleeHeroAnimation() {
           <h2 className="hero-keyword" style={{ top: "10vh", right: "5vw" }}>
             <SplitTextChars text="KIVILCIM" />
           </h2>
-          <div className="step-desc step-desc--left" style={{ opacity: 0, transform: "translateY(20px)" }}>
+          <div
+            className="step-desc step-desc--left"
+            style={{ opacity: 0, transform: "translateY(20px)" }}
+          >
             İnovasyon, farklı olma, yeni fikirler üretme.
           </div>
         </div>
@@ -622,14 +804,20 @@ export default function KleeHeroAnimation() {
                 height: "60vh",
                 borderRadius: "24px",
                 overflow: "hidden",
-                boxShadow: "0 30px 80px rgba(0,0,0,0.18), 0 10px 30px rgba(0,0,0,0.10)",
+                boxShadow:
+                  "0 30px 80px rgba(0,0,0,0.18), 0 10px 30px rgba(0,0,0,0.10)",
                 display: "block",
               }}
             >
               <img
                 src="/project-1.png"
                 alt="Klee Team"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
               />
             </CardItem>
 
@@ -640,7 +828,8 @@ export default function KleeHeroAnimation() {
                 position: "absolute",
                 inset: 0,
                 borderRadius: "24px",
-                background: "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent 60%)",
+                background:
+                  "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent 60%)",
                 pointerEvents: "none",
               }}
             />

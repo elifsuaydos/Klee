@@ -1,204 +1,52 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, Fragment } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import Image from "next/image";
 import KleeHeroAnimation from "./components/KleeHeroAnimation";
-import { RandomLetterSwapPingPong, RandomLetterSwapForward } from "./components/RandomLetterSwap";
+import { RandomLetterSwapPingPong } from "./components/RandomLetterSwap";
 import GalleryModal from "./components/GalleryModal";
 
 /* ================================================
    DATA
    ================================================ */
-const PROJECT_TABS = ["PROJE 1", "PROJE 2", "PROJE 3", "PROJE 4", "PROJE 5"];
-
-const PROJECTS_DATA = {
-  "PROJE 1": [
-    {
-      image: "/project-1.png",
-      tag: "E-Ticaret",
-      tagClass: "tag-blue",
-      title: "Luxe Commerce",
-      desc: "Premium e-ticaret platformu — modern alışveriş deneyimi.",
-    },
-    {
-      image: "/project-2.png",
-      tag: "Mobil Uygulama",
-      tagClass: "tag-green",
-      title: "FitTrack",
-      desc: "Sağlık & fitness takip uygulaması.",
-    },
-    {
-      image: "/project-3.png",
-      tag: "Emlak",
-      tagClass: "tag-red",
-      title: "Evora",
-      desc: "Akıllı emlak arama platformu.",
-    },
-    {
-      image: "/project-4.png",
-      tag: "SaaS",
-      tagClass: "tag-yellow",
-      title: "DataPulse",
-      desc: "Analitik dashboard çözümü.",
-    },
-    {
-      image: "/project-5.png",
-      tag: "Yemek Sipariş",
-      tagClass: "tag-red",
-      title: "TasteHub",
-      desc: "Yemek sipariş & teslimat platformu.",
-    },
-  ],
-  "PROJE 2": [
-    {
-      image: "/project-3.png",
-      tag: "Web Tasarım",
-      tagClass: "tag-red",
-      title: "Artisan Studio",
-      desc: "Kreatif ajans web sitesi tasarımı.",
-    },
-    {
-      image: "/project-1.png",
-      tag: "Dijital Pazarlama",
-      tagClass: "tag-blue",
-      title: "GrowthLab",
-      desc: "SEO ve dijital büyüme platformu.",
-    },
-    {
-      image: "/project-5.png",
-      tag: "Sosyal Medya",
-      tagClass: "tag-green",
-      title: "Connekt",
-      desc: "Sosyal medya yönetim aracı.",
-    },
-    {
-      image: "/project-2.png",
-      tag: "Fintech",
-      tagClass: "tag-yellow",
-      title: "PayFlow",
-      desc: "Ödeme altyapısı ve yönetim paneli.",
-    },
-    {
-      image: "/project-4.png",
-      tag: "Eğitim",
-      tagClass: "tag-blue",
-      title: "EduVerse",
-      desc: "Online eğitim platformu.",
-    },
-  ],
-  "PROJE 3": [
-    {
-      image: "/project-4.png",
-      tag: "Blockchain",
-      tagClass: "tag-yellow",
-      title: "ChainVault",
-      desc: "Web3 cüzdan ve DeFi platformu.",
-    },
-    {
-      image: "/project-2.png",
-      tag: "Sağlık",
-      tagClass: "tag-green",
-      title: "MedConnect",
-      desc: "Tele-tıp randevu sistemi.",
-    },
-    {
-      image: "/project-1.png",
-      tag: "E-Ticaret",
-      tagClass: "tag-blue",
-      title: "MarketPro",
-      desc: "B2B pazar yeri çözümü.",
-    },
-    {
-      image: "/project-5.png",
-      tag: "Lojistik",
-      tagClass: "tag-red",
-      title: "RouteWise",
-      desc: "Akıllı rota planlama sistemi.",
-    },
-    {
-      image: "/project-3.png",
-      tag: "IoT",
-      tagClass: "tag-green",
-      title: "SmartNest",
-      desc: "Akıllı ev otomasyon paneli.",
-    },
-  ],
-  "PROJE 4": [
-    {
-      image: "/project-5.png",
-      tag: "Eğlence",
-      tagClass: "tag-red",
-      title: "StreamWave",
-      desc: "İçerik yayın platformu.",
-    },
-    {
-      image: "/project-3.png",
-      tag: "Spor",
-      tagClass: "tag-green",
-      title: "GameDay",
-      desc: "Canlı skor ve istatistik uygulaması.",
-    },
-    {
-      image: "/project-4.png",
-      tag: "CRM",
-      tagClass: "tag-yellow",
-      title: "ClientHub",
-      desc: "Müşteri ilişkileri yönetimi.",
-    },
-    {
-      image: "/project-1.png",
-      tag: "Gayrimenkul",
-      tagClass: "tag-blue",
-      title: "PropTech",
-      desc: "Gayrimenkul değerleme aracı.",
-    },
-    {
-      image: "/project-2.png",
-      tag: "Seyahat",
-      tagClass: "tag-green",
-      title: "Wanderlust",
-      desc: "Seyahat planlama uygulaması.",
-    },
-  ],
-  "PROJE 5": [
-    {
-      image: "/project-2.png",
-      tag: "AI / ML",
-      tagClass: "tag-green",
-      title: "NeuralDesk",
-      desc: "Yapay zeka destekli iş asistanı.",
-    },
-    {
-      image: "/project-4.png",
-      tag: "HR Tech",
-      tagClass: "tag-yellow",
-      title: "TeamForge",
-      desc: "İnsan kaynakları yönetim sistemi.",
-    },
-    {
-      image: "/project-5.png",
-      tag: "Medya",
-      tagClass: "tag-red",
-      title: "PressBox",
-      desc: "Dijital haber ve medya platformu.",
-    },
-    {
-      image: "/project-1.png",
-      tag: "Otomasyon",
-      tagClass: "tag-blue",
-      title: "FlowEngine",
-      desc: "İş süreçleri otomasyon aracı.",
-    },
-    {
-      image: "/project-3.png",
-      tag: "Güvenlik",
-      tagClass: "tag-red",
-      title: "ShieldNet",
-      desc: "Siber güvenlik izleme paneli.",
-    },
-  ],
-};
+const PROJECTS_GALLERY = [
+  {
+    image: "/project-1.png",
+    tag: "E-Ticaret",
+    tagClass: "tag-blue",
+    title: "Luxe Commerce",
+    desc: "Premium e-ticaret platformu — modern alışveriş deneyimi.",
+  },
+  {
+    image: "/project-2.png",
+    tag: "Mobil Uygulama",
+    tagClass: "tag-green",
+    title: "FitTrack",
+    desc: "Sağlık & fitness takip uygulaması.",
+  },
+  {
+    image: "/project-3.png",
+    tag: "Emlak",
+    tagClass: "tag-red",
+    title: "Evora",
+    desc: "Akıllı emlak arama platformu.",
+  },
+  {
+    image: "/project-4.png",
+    tag: "SaaS",
+    tagClass: "tag-yellow",
+    title: "DataPulse",
+    desc: "Analitik dashboard çözümü.",
+  },
+  {
+    image: "/project-5.png",
+    tag: "Yemek Sipariş",
+    tagClass: "tag-red",
+    title: "TasteHub",
+    desc: "Yemek sipariş & teslimat platformu.",
+  },
+];
 
 /* ================================================
    ICONS (inline SVG)
@@ -240,22 +88,6 @@ const LocationIcon = () => (
   </svg>
 );
 
-const ArrowRightIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={2}
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-    />
-  </svg>
-);
-
 const PhoneIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -273,114 +105,204 @@ const PhoneIcon = () => (
 );
 
 /* ================================================
-   NAVBAR COMPONENT
+   PETAL PATH (same as KleeHeroAnimation.js)
    ================================================ */
-function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+const PETAL_PATH =
+  "M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z";
+
+/* ================================================
+   MINIMALIST TOP BAR (Menu trigger + Klee branding)
+   ================================================ */
+function TopBar({ onMenuOpen }) {
+  return (
+    <header className="top-bar" id="top-bar">
+      {/* Left: Hamburger menu trigger */}
+      <button
+        className="menu-trigger"
+        onClick={onMenuOpen}
+        aria-label="Menüyü aç"
+        id="menu-trigger-btn"
+      >
+        <span className="menu-trigger-icon" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </span>
+        <span className="menu-trigger-label">Menu</span>
+      </button>
+
+      {/* Center: Klee branding */}
+      <div className="top-bar-brand" id="top-bar-brand">
+        {/* Hidden clover logo — hero clover animates here */}
+        <svg
+          className="navbar-clover-logo"
+          viewBox="0 0 100 100"
+          width="28"
+          height="28"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ opacity: 0, transformOrigin: "center center" }}
+          aria-hidden="true"
+        >
+          <g transform="translate(50, 50)">
+            <g fill="var(--ketchup-red)">
+              <path d={PETAL_PATH} transform="translate(-1, -1) rotate(-45)" />
+            </g>
+            <g fill="var(--sunshine-yellow)">
+              <path d={PETAL_PATH} transform="translate(1, -1) rotate(45)" />
+            </g>
+            <g fill="var(--sky-blue)">
+              <path d={PETAL_PATH} transform="translate(-1, 1) rotate(-135)" />
+            </g>
+            <g fill="var(--olive-green)">
+              <path d={PETAL_PATH} transform="translate(1, 1) rotate(135)" />
+            </g>
+          </g>
+        </svg>
+        <span className="top-bar-klee-text">Klee</span>
+      </div>
+
+      {/* Right: empty spacer to balance the flex layout */}
+      <div className="top-bar-right" aria-hidden="true" />
+    </header>
+  );
+}
+
+/* ================================================
+   FULL-PAGE MENU OVERLAY
+   ================================================ */
+function MenuOverlay({ isOpen, onClose }) {
+  const handleNavClick = useCallback(
+    (e, targetId) => {
+      e.preventDefault();
+      onClose();
+      setTimeout(() => {
+        if (targetId === "home") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          const el = document.getElementById(targetId);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 400); // wait for overlay close animation
+    },
+    [onClose],
+  );
+
+  // ESC key closes overlay
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "Escape" && isOpen) onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen, onClose]);
+
+  return (
+    <div
+      className={`menu-overlay ${isOpen ? "open" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Ana navigasyon menüsü"
+    >
+      {/* Close button */}
+      <button
+        className="menu-overlay-close"
+        onClick={onClose}
+        aria-label="Menüyü kapat"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          width="18"
+          height="18"
+          aria-hidden="true"
+        >
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        <span>Kapat</span>
+      </button>
+
+      <nav className="menu-overlay-nav" aria-label="Sayfa navigasyonu">
+        <a
+          href="#home"
+          className="menu-overlay-link"
+          onClick={(e) => handleNavClick(e, "home")}
+        >
+          <span className="menu-overlay-link-num">01</span>
+          <span className="menu-overlay-link-label">
+            <RandomLetterSwapPingPong
+              label="Ana Sayfa"
+              staggerDuration={0.025}
+            />
+          </span>
+        </a>
+        <a
+          href="#projects"
+          className="menu-overlay-link"
+          onClick={(e) => handleNavClick(e, "projects")}
+        >
+          <span className="menu-overlay-link-num">02</span>
+          <span className="menu-overlay-link-label">
+            <RandomLetterSwapPingPong
+              label="Projeler"
+              staggerDuration={0.025}
+            />
+          </span>
+        </a>
+        <a
+          href="#contact"
+          className="menu-overlay-link"
+          onClick={(e) => handleNavClick(e, "contact")}
+        >
+          <span className="menu-overlay-link-num">03</span>
+          <span className="menu-overlay-link-label">
+            <RandomLetterSwapPingPong
+              label="İletişim"
+              staggerDuration={0.025}
+            />
+          </span>
+        </a>
+      </nav>
+
+      <div className="menu-overlay-footer">
+        <span>Klee — Ankara, Türkiye</span>
+        <span>hello@klee.io</span>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================
+   SCROLL PROGRESS INDICATOR (bottom right)
+   ================================================ */
+function ScrollProgress() {
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+      const pct = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+      setProgress(pct);
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleNavClick = useCallback((e, targetId) => {
-    e.preventDefault();
-    setMobileOpen(false);
-    
-    if (targetId === "home") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-    const el = document.getElementById(targetId);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, []);
-
   return (
-    <nav className={`navbar ${scrolled ? "scrolled" : ""}`} id="navbar" style={{ opacity: 0 }}>
-      <div className="navbar-inner">
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <svg
-            className="navbar-clover-logo"
-            viewBox="0 0 100 100"
-            width="32"
-            height="32"
-            xmlns="http://www.w3.org/2000/svg"
-            style={{ opacity: 0, transformOrigin: "center center" }}
-            aria-hidden="true"
-          >
-            <g transform="translate(50, 50)">
-              <g fill="var(--ketchup-red)">
-                <path
-                  d="M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z"
-                  transform="translate(-1, -1) rotate(-45)"
-                />
-              </g>
-              <g fill="var(--sunshine-yellow)">
-                <path
-                  d="M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z"
-                  transform="translate(1, -1) rotate(45)"
-                />
-              </g>
-              <g fill="var(--sky-blue)">
-                <path
-                  d="M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z"
-                  transform="translate(-1, 1) rotate(-135)"
-                />
-              </g>
-              <g fill="var(--olive-green)">
-                <path
-                  d="M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z"
-                  transform="translate(1, 1) rotate(135)"
-                />
-              </g>
-            </g>
-          </svg>
-          <a
-            href="#home"
-            className="navbar-brand"
-            onClick={(e) => handleNavClick(e, "home")}
-          >
-            Klee
-          </a>
-        </div>
-        <button
-          className="navbar-menu-btn"
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-label="Toggle navigation menu"
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-        <div className={`navbar-links ${mobileOpen ? "open" : ""}`}>
-          <a
-            href="#home"
-            className="navbar-link"
-            onClick={(e) => handleNavClick(e, "home")}
-          >
-            <RandomLetterSwapPingPong label="ANA SAYFA" />
-          </a>
-          <a
-            href="#projects"
-            className="navbar-link"
-            onClick={(e) => handleNavClick(e, "projects")}
-          >
-            <RandomLetterSwapPingPong label="PROJELER" />
-          </a>
-          <a
-            href="#contact"
-            className="navbar-link"
-            onClick={(e) => handleNavClick(e, "contact")}
-          >
-            <RandomLetterSwapPingPong label="İLETİŞİM" />
-          </a>
-        </div>
+    <div className="scroll-progress-indicator" aria-hidden="true">
+      <div className="scroll-progress-track">
+        <div
+          className="scroll-progress-bar"
+          style={{ width: `${progress * 100}%` }}
+        />
       </div>
-    </nav>
+      <span className="scroll-progress-label">aşağı kaydır</span>
+    </div>
   );
 }
 
@@ -390,27 +312,13 @@ function Navbar() {
    PROJECTS SECTION
    ================================================ */
 function ProjectsSection() {
-  const [activeTab, setActiveTab] = useState(PROJECT_TABS[0]);
-  const [fading, setFading] = useState(false);
-  const [displayedProjects, setDisplayedProjects] = useState(
-    PROJECTS_DATA[PROJECT_TABS[0]],
-  );
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
-
-  const handleTabChange = (tab) => {
-    if (tab === activeTab) return;
-    setFading(true);
-    setTimeout(() => {
-      setActiveTab(tab);
-      setDisplayedProjects(PROJECTS_DATA[tab]);
-      setFading(false);
-    }, 280);
-  };
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   return (
     <section className="projects" id="projects">
-      {/* Clover-shaped dark background — matches the attached concave shape */}
+      {/* Clover-shaped dark background */}
       <svg
         className="projects-clover-bg"
         viewBox="0 0 200 140"
@@ -430,7 +338,9 @@ function ProjectsSection() {
           fillRule="evenodd"
         />
       </svg>
+
       <div className="container">
+        {/* Section header */}
         <div className="projects-header fade-in-up">
           <h2 className="projects-title">Seçilmiş Çalışmalar</h2>
           <p className="projects-description">
@@ -439,57 +349,64 @@ function ProjectsSection() {
           </p>
         </div>
 
-        <div className="project-tabs fade-in-up">
-          {PROJECT_TABS.map((tab, index) => (
-            <Fragment key={tab}>
-              <button
-                className={`project-tab ${activeTab === tab ? "active" : ""}`}
-                onClick={() => handleTabChange(tab)}
-              >
-                <RandomLetterSwapPingPong label={tab} staggerDuration={0.02} />
-              </button>
-              {index < PROJECT_TABS.length - 1 && (
-                <span className="project-tab-spacer" aria-hidden="true" />
-              )}
-            </Fragment>
-          ))}
-        </div>
+        {/* Accordion gallery */}
+        <div
+          className="accordion-gallery fade-in-up"
+          onMouseLeave={() => setHoveredIndex(null)}
+        >
+          {PROJECTS_GALLERY.map((project, index) => {
+            const isHovered = hoveredIndex === index;
+            const isCompressed = hoveredIndex !== null && !isHovered;
 
-        <div className={`project-grid ${fading ? "fade-out" : ""}`}>
-          {displayedProjects.map((project, index) => (
-            <div
-              key={`${activeTab}-${index}`}
-              className={`project-card fade-in-up stagger-${index + 1}`}
-              onClick={() => {
-                setGalleryIndex(index);
-                setGalleryOpen(true);
-              }}
-            >
-              <div className="project-card-image">
-                <Image
-                  src={project.image}
-                  alt={project.title}
-                  width={800}
-                  height={500}
-                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
-                  priority={index < 2}
-                />
-              </div>
-              {project.title === "Luxe Commerce" && (
-                <div className="project-card-content">
-                  <h3 className="project-card-title">
-                    <RandomLetterSwapForward label={project.title} staggerDuration={0.015} />
-                  </h3>
-                  <p className="project-card-desc">{project.desc}</p>
+            return (
+              <div
+                key={`${project.title}-${index}`}
+                className={`accordion-card${isHovered ? " is-hovered" : ""}${isCompressed ? " is-compressed" : ""}`}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onFocus={() => setHoveredIndex(index)}
+                onBlur={() => setHoveredIndex(null)}
+                onClick={() => {
+                  setGalleryIndex(index);
+                  setGalleryOpen(true);
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`${project.title} — Galeriyi aç`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setGalleryIndex(index);
+                    setGalleryOpen(true);
+                  }
+                }}
+              >
+                {/* Full-bleed image */}
+                <div className="accordion-card-image">
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    style={{ objectFit: "cover" }}
+                    sizes="(max-width: 900px) 70vw, (max-width: 1200px) 30vw, 22vw"
+                    priority={index < 2}
+                  />
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* Gradient scrim */}
+                <div className="accordion-card-scrim" />
+
+                {/* Expanded overlay */}
+                <div className="accordion-card-overlay">
+                  <h3 className="accordion-card-title">{project.title}</h3>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
+
       <GalleryModal
         isOpen={galleryOpen}
-        images={displayedProjects}
+        images={PROJECTS_GALLERY}
         initialIndex={galleryIndex}
         onClose={() => setGalleryOpen(false)}
       />
@@ -605,6 +522,8 @@ function Footer() {
    MAIN PAGE
    ================================================ */
 export default function Home() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   /* Intersection Observer for fade-in-up scroll animations */
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -624,9 +543,29 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
   return (
     <>
-      <Navbar />
+      {/* Minimalist top bar with menu trigger + centered Klee branding */}
+      <TopBar onMenuOpen={() => setMenuOpen(true)} />
+
+      {/* Full-page menu overlay */}
+      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Scroll progress indicator */}
+      <ScrollProgress />
+
       <main>
         <KleeHeroAnimation />
         <ProjectsSection />

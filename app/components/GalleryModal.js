@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 
 export default function GalleryModal({
@@ -10,41 +10,46 @@ export default function GalleryModal({
   onClose,
 }) {
   const scrollContainerRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex || 0);
+  const [infoPanelOpen, setInfoPanelOpen] = useState(false);
 
-  const scrollToIndex = (index) => {
+  const scrollToIndex = useCallback((index) => {
     const container = scrollContainerRef.current;
     if (!container) return;
     const itemWidth = container.clientWidth;
     container.scrollTo({ left: itemWidth * index, behavior: "smooth" });
+    setCurrentIndex(index);
+  }, []);
+
+  const handleThumbnailClick = (index) => {
+    scrollToIndex(index);
   };
 
-  const handlePrev = () => {
+  // Track current slide via scroll
+  useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const itemWidth = container.clientWidth;
-    const currentIndex = Math.round(container.scrollLeft / itemWidth);
-    const nextIndex = Math.max(0, currentIndex - 1);
-    scrollToIndex(nextIndex);
-  };
 
-  const handleNext = () => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const itemWidth = container.clientWidth;
-    const currentIndex = Math.round(container.scrollLeft / itemWidth);
-    const nextIndex = Math.min(images.length - 1, currentIndex + 1);
-    scrollToIndex(nextIndex);
-  };
+    const handleScroll = () => {
+      const itemWidth = container.clientWidth;
+      const idx = Math.round(container.scrollLeft / itemWidth);
+      setCurrentIndex(idx);
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [isOpen]);
 
   // When modal opens, scroll to the correct initial index
   useEffect(() => {
     if (isOpen && scrollContainerRef.current) {
       const container = scrollContainerRef.current;
-      // Use setTimeout to ensure DOM has updated and layout is calculated
+      setCurrentIndex(initialIndex || 0);
+      setInfoPanelOpen(false);
       setTimeout(() => {
         const itemWidth = container.clientWidth;
         container.scrollTo({
-          left: itemWidth * initialIndex,
+          left: itemWidth * (initialIndex || 0),
           behavior: "instant",
         });
       }, 50);
@@ -63,81 +68,162 @@ export default function GalleryModal({
     };
   }, [isOpen]);
 
+  // ESC key closes panel or modal
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "Escape") {
+        if (infoPanelOpen) setInfoPanelOpen(false);
+        else onClose();
+      }
+      if (e.key === "ArrowLeft") {
+        scrollToIndex(Math.max(0, currentIndex - 1));
+      }
+      if (e.key === "ArrowRight") {
+        scrollToIndex(Math.min(images.length - 1, currentIndex + 1));
+      }
+    };
+    if (isOpen) window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen, infoPanelOpen, currentIndex, images, onClose, scrollToIndex]);
+
   if (!isOpen) return null;
 
+  const currentProject = images[currentIndex] || images[0];
+
+  // Mock project info data (in a real scenario, this would come from the images/data prop)
+  const projectInfo = {
+    title: currentProject?.title || "Proje Başlığı",
+    services: currentProject?.tag || "Web Tasarım, Geliştirme",
+    team: "Klee Studio",
+    description:
+      currentProject?.desc ||
+      "Bu proje, müşterimizin dijital varlığını güçlendirmek amacıyla tasarlanmış premium bir web deneyimidir. Modern tasarım prensipleri ve kullanıcı odaklı yaklaşımla hayata geçirildi.",
+  };
+
   return (
-    <div className="gallery-modal-overlay">
+    <div className="gallery-immersive-overlay" role="dialog" aria-modal="true">
+      {/* Top-left: Back button */}
       <button
-        className="gallery-nav gallery-nav-left"
-        onClick={handlePrev}
-        aria-label="Previous image"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15.75 19.5L8.25 12l7.5-7.5"
-          />
-        </svg>
-      </button>
-      <button
-        className="gallery-nav gallery-nav-right"
-        onClick={handleNext}
-        aria-label="Next image"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8.25 4.5L15.75 12l-7.5 7.5"
-          />
-        </svg>
-      </button>
-      <button
-        className="gallery-modal-close"
+        className="gallery-back-btn"
         onClick={onClose}
-        aria-label="Close Gallery"
+        aria-label="Geri dön"
       >
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
           viewBox="0 0 24 24"
-          strokeWidth={2}
+          fill="none"
           stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
+          <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
+        <span>Geri dön</span>
       </button>
 
-      <div className="gallery-modal-scroll" ref={scrollContainerRef}>
+      {/* Top-right: Project info button */}
+      <button
+        className={`gallery-info-btn ${infoPanelOpen ? "active" : ""}`}
+        onClick={() => setInfoPanelOpen((v) => !v)}
+        aria-label="Proje bilgisi"
+        aria-expanded={infoPanelOpen}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+        <span>Proje bilgisi</span>
+      </button>
+
+      {/* Full-screen image/video display */}
+      <div className="gallery-immersive-scroll" ref={scrollContainerRef}>
         {images.map((img, idx) => (
-          <div key={idx} className="gallery-modal-slide">
+          <div key={idx} className="gallery-immersive-slide">
             <Image
               src={img.image}
-              alt={`Gallery Image ${idx + 1}`}
+              alt={img.title || `Proje görseli ${idx + 1}`}
               fill
-              style={{ objectFit: "contain", padding: "80px" }}
+              style={{ objectFit: "cover" }}
               sizes="100vw"
+              priority={idx === currentIndex}
             />
           </div>
         ))}
       </div>
+
+      {/* Bottom: Thumbnail strip */}
+      <div className="gallery-thumbnail-strip">
+        {images.map((img, idx) => (
+          <button
+            key={idx}
+            className={`gallery-thumbnail ${currentIndex === idx ? "active" : ""}`}
+            onClick={() => handleThumbnailClick(idx)}
+            aria-label={`${img.title || "Görsel"} ${idx + 1}`}
+          >
+            <Image
+              src={img.image}
+              alt={img.title || `Küçük resim ${idx + 1}`}
+              fill
+              style={{ objectFit: "cover" }}
+              sizes="80px"
+            />
+          </button>
+        ))}
+      </div>
+
+      {/* Right slide-out: Project info panel */}
+      <aside
+        className={`gallery-info-panel ${infoPanelOpen ? "open" : ""}`}
+        aria-label="Proje bilgisi paneli"
+      >
+        {/* Close button overlapping gallery */}
+        <button
+          className="gallery-info-panel-close"
+          onClick={() => setInfoPanelOpen(false)}
+          aria-label="Paneli kapat"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div className="gallery-info-panel-content">
+          <p className="gallery-info-panel-eyebrow">Proje</p>
+          <h2 className="gallery-info-panel-title">{projectInfo.title}</h2>
+
+          <div className="gallery-info-panel-section">
+            <h3 className="gallery-info-panel-label">Hizmetler</h3>
+            <p className="gallery-info-panel-value">{projectInfo.services}</p>
+          </div>
+
+          <div className="gallery-info-panel-section">
+            <h3 className="gallery-info-panel-label">Ekip</h3>
+            <p className="gallery-info-panel-value">{projectInfo.team}</p>
+          </div>
+
+          <div className="gallery-info-panel-section gallery-info-panel-desc">
+            <p>{projectInfo.description}</p>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }
