@@ -305,18 +305,21 @@ export default function HorizonHeroSection() {
         const mat = new THREE.MeshBasicMaterial({
           color: new THREE.Color(hex),
           transparent: true, opacity: 0,
-          side: THREE.DoubleSide, depthWrite: false,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          depthTest: false, // renders on top of planet sphere regardless of depth
         });
         const mesh = new THREE.Mesh(petalGeo.clone(), mat);
         mesh.rotation.z = PETAL_ANGLES[idx];
+        mesh.renderOrder = 100; // draw after all other objects
         group.add(mesh);
       });
 
       // Fixed world-space scale — perspective makes it tiny from far, large up close
-      // PETAL_PATH geom ~40 units wide; scale=4 → 160 unit wide clover
-      // At camera start (dist ~2290): appears ~5% of screen height
-      // At camera end  (dist ~140) : appears ~79% of screen height → triggers white overlay
-      group.scale.set(4, 4, 4);
+      // PETAL_PATH geom ~40 units wide; scale=8 → 320 unit wide clover
+      // At HORIZON fade (camera ~z=-60, dist ~1930): appears ~13% of screen → small but clear
+      // At camera end  (dist ~140) : appears ~100% screen width → triggers white overlay
+      group.scale.set(8, 8, 8);
       refs.scene.add(group);
       refs.clover = group;
     };
@@ -372,10 +375,12 @@ export default function HorizonHeroSection() {
         m.position.y = (m.userData.baseZ ?? -100) + 50 + Math.cos(time * 0.15) * p;
       });
 
-      // Clover: fixed world-scale, billboard, opacity only driven by scroll
+      // Clover: fixed world-scale, billboard + accumulated spin, opacity only driven by scroll
       if (refs.clover && refs.camera) {
-        refs.clover.lookAt(refs.camera.position);
-        refs.clover.rotateZ(0.004);
+        // lookAt resets rotation each frame — accumulate spin separately
+        refs.cloverSpin = (refs.cloverSpin ?? 0) + 0.006;
+        refs.clover.lookAt(refs.camera.position); // face camera
+        refs.clover.rotateZ(refs.cloverSpin);     // apply total spin on top of lookAt
         const op = refs.cloverOpacityFactor;
         refs.clover.children.forEach(p => { p.material.opacity = op; });
       }
