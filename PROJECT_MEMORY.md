@@ -270,6 +270,16 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 
 > Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
 
+- **[2026-05-16] /horizon: Final sekans — gezegen halo → beyaz ekran → Klee yonca**
+  - `totalSections 2→3` (400vh sayfa, 300vh scroll = 6 evre: HORIZON / APPROACH / CONTACT / FOCUS / EXPANSION / BLOOM).
+  - Halo `refs.halo` olarak ayrıca saklanıyor; `intensity` uniform ile renk mavi→beyaz kayar, `scale 1→5.5` (scroll 65-95%).
+  - Animate loop: `currentHaloScale` + `currentHaloIntensity` smooth interpolation, `halo.scale.setScalar()` + uniform her frame.
+  - 4-waypoint kamera path: HORIZON(z:300) → COSMOS(z:-300) → APPROACH(z:-1000) → CLOSE(z:-1850).
+  - Three.js yonca opacity factor: 0.85→0.95 arası 1→0 (DOM yonca devralmadan önce kaybolur).
+  - DOM beyaz overlay: progress 0.85→0.95, `z-index:5`.
+  - DOM Klee yoncası: progress 0.90→1.00, `PETAL_PATH` + CSS var renkler, 300px, 22s spin, `z-index:10`.
+  - Mountain disappear threshold 0.55→0.45 (daha erken açılır).
+
 - **[2026-05-16] /horizon: Görünürlük ve layout düzeltmeleri (fog, bloom, yonca)**
   - Scene fog kaldırıldı — `FogExp2(density=0.00012)` 2000+ birimde planeti %100 gizliyordu.
   - Bloom threshold `0.85→0.2`, strength `0.45→0.7` — Klee renklerinin luminance'ı 0.43-0.84 arası, artık bloom alıyorlar.
