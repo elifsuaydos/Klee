@@ -191,7 +191,7 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 2. `Home` üstte `TopBar`, `MenuOverlay`, `ScrollProgress` render eder; `<main>` içinde `<KleeHeroAnimation />`, `<ProjectsSection />`, `<ContactSection />`, en altta `<Footer />` bulunur.
 3. `Home` içinde **global IntersectionObserver** kurulur; `.fade-in-up` class'lı tüm elementlere intersection anında `.visible` ekler ([page.js:529](app/page.js#L529)).
 4. **Hero:** Yukarıdaki zaman çizelgesi.
-5. **Projects:** `PROJECTS_GALLERY` ile tek sıra yatay accordion galerisi. Hover'da kart genişler, diğerleri sıkışır, başlık overlay görünür.
+5. **Projects:** `PROJECTS_GALLERY` ile `<ImageGallery>` hover-expand galerisi. Hover'da kart `flex-grow:4` ile genişler — tüm kartlar her durumda aynı davranır (aktif gösterge yok). Foto `object-fit: contain` ile kırpılmadan görünür. Tıklayınca `<GalleryModal>` o projenin 5 fotosuyla (`images[]`) açılır.
 6. **Project card click:** `galleryIndex` set + `galleryOpen = true` → `<GalleryModal>` açılır (tıklanan kartın verisiyle).
 7. **Gallery:** Yatay snap-scroll, ok butonları ile gezinme. `document.body.overflow = "hidden"`.
 8. **Contact:** Statik kartlar (email, telefon, konum) + WhatsApp CTA (`https://wa.me/`, **numarasız**).
@@ -211,6 +211,7 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 | `--gray-50 … --gray-900`                      | Slate tonları                                  | Metin, çerçeve, ikincil yüzeyler                |
 | `--font-family`                               | `Inter`                                        | Body                                            |
 | `--font-heading`                              | `Outfit`                                       | Başlıklar, hero keyword, navbar-brand           |
+| `--font-display`                              | `Cormorant Garamond` (italic)                  | Hero intro yazısı (sol-alt)                     |
 | `--container-max`                             | `1200px`                                       | `.container`                                    |
 | `--section-padding`                           | `120px 0` (mobilde 80px / landscape kompakt)   |                                                 |
 | `--shadow-sm/md/lg/xl`                        | Slate-bazlı alpha gölgeler                     |                                                 |
@@ -225,7 +226,7 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 - **Özel landscape mod:** `@media (max-height: 500px) and (orientation: landscape)` — yatay tutulmuş telefon/küçük tablet için.
 - Tipografi `clamp(min, vw/vh, max)` ile fluid.
 - Hero animasyonunda JS tarafı da `isMobile()` / `isLandscape()` kontrol eder; CSS ile JS aynı eşik değerini kullanır.
-- Projects accordion gallery — desktop'ta tek sıra flex/accordion; mobilde yatay scroll (kartlar ~70vw, snap), başlık overlay sürekli görünür.
+- Projects image-gallery — desktop'ta tek sıra `display:flex` hover-expand (5 eşit kart, hover'da `flex-grow:4`); mobil (<768px)'de tek kolon dikey stack (`aspect-ratio: 4/3`).
 - Hero final content: desktop'ta yatay (image + text yan yana), mobilde dikey (image üstte 32vh, text altta), landscape'te tekrar yatay ama kompakt.
 
 ## ⚙️ Kritik Konfigürasyonlar & Sabit Değerler
@@ -282,6 +283,33 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 ## 📌 Son Değişiklikler (Changelog)
 
 > Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
+
+- **[2026-05-16] Menü ş̧erit / Intro yatay / Scroll bar dolum / Theme scope / Galeri-modal contain düzeltmeleri**
+  - **Menu siyah şerit fix:** `.menu-overlay` opacity-only + `visibility` toggle ile snap-açıl (0.12s). İç linklerden `translateY(24px)` kaldırıldı; sadece opacity stagger (0.05s→0.34s). Üstteki "siyah kayma" tamamen yok. Dosya: [globals.css `.menu-overlay`](app/globals.css).
+  - **Intro yatay layout:** `.hero-intro-text` font-size `clamp(1.8rem, 4.5vw, 3.6rem)`, `max-width: 50vw`, `line-height: 1.2`. Sol-alt anchor sabit, yazı 1-2 satırda ekran ortasına kadar uzanır (yatay yarı). Dikey yığılma yok.
+  - **Scroll bar handoff dolum:** ScrollProgress update fonksiyonunda `body[data-hero-complete="true"]` kontrolü → bar `scaleX(1)`. CSS'te bu state için `transition: transform 0.45s` ile yumuşak dolum. `.scroll-progress-indicator` fade-out'una `0.55s delay` eklendi (kullanıcı barın dolduğunu görür sonra kaybolur). MutationObserver ile flag flip'i yakalanır. Dosyalar: [page.js ScrollProgress](app/page.js), [globals.css](app/globals.css).
+  - **Theme scope sıkılaştırma:** IntersectionObserver rootMargin `-80px 0px -50% 0px` → `-80px 0px -85% 0px`. Dark mode sadece Selected Works section'ı viewport'un üst ~%15'inde olduğunda aktif. Contact/footer'a sıçramaz. Dosya: [page.js](app/page.js).
+  - **Galeri kart cover'a geri:** ImageGallery `objectFit: contain → cover`, bg `#0a0a0a → #111`. Mobile aspect `16:10 → 4:3`. Hover-expand davranışı korunur. Dosyalar: [ImageGallery.js](app/components/ImageGallery.js), [globals.css](app/globals.css).
+  - **Modal slide contain'a geçti:** GalleryModal `.gallery-immersive-slide` Image `objectFit: cover → contain`. Modal `#000` bg ile fotonun tamamı kırpılmadan ekrana sığar. Dosya: [GalleryModal.js](app/components/GalleryModal.js).
+
+- **[2026-05-16] Hero intro büyütme / Klee slide / Galeri sade + per-project / Renk daha belirgin**
+  - **Intro yazısı büyütüldü:** `.hero-intro-text` font-size `clamp(1.8rem, 4.2vw, 3.6rem)` → `clamp(3rem, 9vw, 8rem)`, line-height 1.05, max-width 88vw. Sol-alt anchor (`padding: 0 6vw 10vh 6vw`) sabit kaldı, yazı sağa-yukarı doğru büyüdü (kutucuğu sol-üstünden büyütme efekti). Mobile/landscape responsive override.
+  - **Inter + Cormorant karma:** Intro `<h2>` üç parçaya ayrıldı. "Klee ile " ve " kavuş." → `.hero-intro-normal` (Inter, fw 600, 0.88em). "Hayalindeki Websitene" → `.hero-intro-emphasis` (Cormorant Garamond italic, fw 600, 1.08em). Dosyalar: [KleeHeroAnimation.js JSX](app/components/KleeHeroAnimation.js), [globals.css](app/globals.css).
+  - **Top-bar Klee slide:** Hero anim boyunca `.top-bar-klee-text` `x: -((slotW+8)/2)` ≈ −18 px → gerçek viewport-merkezde durur (slot+gap yarısı kadar sola kayık). Converge label'da `+0.9s`'den itibaren 1.0s `power2.inOut` ile `x: 0`'a kayar — yonca slot'a inerken Klee yazısı doğal konumuna geçer. Hero clover landing point (`navbar-clover-logo` bbox) hep aynı yerde olduğu için hizalama bozulmaz. Dosya: [KleeHeroAnimation.js useGSAP init + converge](app/components/KleeHeroAnimation.js).
+  - **Renk geçişleri daha belirgin:** `--glow-opacity 0.13/0.16 → 0.55/0.6` her step için; `.hero-glow-layer` radial stop `transparent 58% → 72%` (daha geniş hale). Yeni `.hero-tint-layer` full-bg flat tint katmanı eklendi (red/green/blue/yellow, alpha 0.12/0.12/0.12/0.14). Converge'da hem glow hem tint opacity 0 (1.2s). Dosyalar: [KleeHeroAnimation.js step1-4 tweens](app/components/KleeHeroAnimation.js), [globals.css `.hero-tint-layer` / `.hero-glow-layer`](app/globals.css).
+  - **ImageGallery aktif gösterge kaldırıldı:** `.klee-gallery-item.is-active` rule'ları silindi (border-radius:0, siyah çerçeve, box-shadow, flex-grow:1 — hepsi gitti). Hover artık koşulsuz: `:not(.is-active):hover` → `:hover`. Tüm kartlar her durumda aynı davranır. `ImageGallery` component'inden `activeIndex` prop'u, `page.js`'ten `activeIndex` state'i kaldırıldı.
+  - **Foto `contain`:** Galeri kartlarında `objectFit: cover → contain`. Kart bg `#111 → #0a0a0a` (boşluk için neutral koyu zemin). Fotonun tamamı kırpılmadan görünür. Mobile dikey stack aspect-ratio `4/3 → 16/10`. Dosyalar: [ImageGallery.js](app/components/ImageGallery.js), [globals.css `.klee-gallery-item`](app/globals.css).
+  - **Per-project images[] yapısı:** `PROJECTS_GALLERY` her item'ına `images: string[5]` eklendi (şimdilik placeholder: kendi PNG'si 5 kez). `ProjectsSection` state `galleryIndex/activeIndex` → `galleryProjectIndex` tek state. `GalleryModal` imzası `images: string[]` + yeni `project: {title, tag, desc, ...}` prop'u alır. Modal artık sadece o projenin 5 fotosunu döndürür — sağa/sola kayma diğer projeye atlamaz. Info paneli `project`'ten beslenir. Dosyalar: [page.js](app/page.js), [GalleryModal.js](app/components/GalleryModal.js).
+
+- **[2026-05-16] Menü / Hero intro / Renk glow / Galeri / Dark-mode polish paketi**
+  - **Menü trigger & kapat:** "MENU" / "KAPAT" yazıları `RandomLetterSwapPingPong` ile sarıldı. Hamburger ikonu hover'da stagger genişlik pulse + menü açıkken (`body[data-menu-open="true"]`) X'e smooth morph. Kapat SVG hover'da `rotate(90deg)`. Dosyalar: [page.js](app/page.js), [globals.css](app/globals.css).
+  - **Menü üst siyahlık fix:** `.menu-overlay` `translateY(-12px)` kaldırıldı, sadece opacity fade. Slide-up animasyonu içeride `.menu-overlay-close / .menu-overlay-link / .menu-overlay-footer` üzerine stagger (0.05s→0.34s). Dosya: [globals.css](app/globals.css).
+  - **Hero intro sol-alt + Cormorant:** "Klee ile *Hayalindeki Websitene* kavuş." sol-altta italic `--font-display` (Cormorant Garamond). `.hero-intro-emphasis` ile vurgulanmış parça. Mobile/landscape responsive. Dosyalar: [layout.js](app/layout.js), [globals.css](app/globals.css), [KleeHeroAnimation.js](app/components/KleeHeroAnimation.js).
+  - **Renk glow background (yonca senkron):** Yeni `.hero-glow-layer` + GSAP CSS-var tween. step1→kırmızı sol-üst, step2→yeşil sağ-alt, step3→mavi sol-alt, step4→sarı sağ-üst (`expo.inOut` 3s, clover travel ile senkron). Converge'da opacity 0. Dosya: [KleeHeroAnimation.js](app/components/KleeHeroAnimation.js).
+  - **Scroll progress sync fix:** `.scroll-progress-bar` `width` transition kaldırıldı → `transform: scaleX()` + `requestAnimationFrame` + DOM mutation (React state yok). Lenis ile frame-perfect. Dosyalar: [globals.css](app/globals.css), [page.js](app/page.js).
+  - **Dark theme top-bar:** IntersectionObserver `.projects` üzerine → `body[data-theme="dark"]` → Klee yazısı + menu trigger + scroll progress beyaz (0.35s transition). Dosyalar: [page.js](app/page.js), [globals.css](app/globals.css).
+  - **Yeni ImageGallery (hover-expand):** Eski `.accordion-*` kaldırıldı; yeni `<ImageGallery>` componenti. `.klee-gallery-item:not(.is-active):hover { flex-grow: 4 }`. Aktif item `border-radius:0; border: 2px solid #000; box-shadow: 0 0 0 1px #fff inset; hover devre dışı`. Mobile: dikey stack aspect 4/3. Modal kapansa da aktif kalır (gösterge). Dosyalar: [ImageGallery.js (NEW)](app/components/ImageGallery.js), [page.js](app/page.js), [globals.css](app/globals.css).
+  - **GalleryModal thumbnail revize:** `.gallery-thumbnail` `border-radius:0; opacity:1; w/h 44×30; border 2px transparent`. Hover rule silindi. Aktif: `border:2px solid #000; box-shadow: 0 0 0 1px #fff inset`. Dosya: [globals.css](app/globals.css).
 
 - **[2026-05-16] Projeler: Accordion galeri + Menü overlay renkleri**
   - Bento grid + tab UI kaldırıldı; tek sıra accordion kartlar (hover expand) eklendi.

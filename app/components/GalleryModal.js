@@ -6,6 +6,7 @@ import Image from "next/image";
 export default function GalleryModal({
   isOpen,
   images,
+  project,
   initialIndex,
   onClose,
 }) {
@@ -88,15 +89,12 @@ export default function GalleryModal({
 
   if (!isOpen) return null;
 
-  const currentProject = images[currentIndex] || images[0];
-
-  // Mock project info data (in a real scenario, this would come from the images/data prop)
   const projectInfo = {
-    title: currentProject?.title || "Proje Başlığı",
-    services: currentProject?.tag || "Web Tasarım, Geliştirme",
+    title: project?.title || "Proje Başlığı",
+    services: project?.tag || "Web Tasarım, Geliştirme",
     team: "Klee Studio",
     description:
-      currentProject?.desc ||
+      project?.desc ||
       "Bu proje, müşterimizin dijital varlığını güçlendirmek amacıyla tasarlanmış premium bir web deneyimidir. Modern tasarım prensipleri ve kullanıcı odaklı yaklaşımla hayata geçirildi.",
   };
 
@@ -148,13 +146,13 @@ export default function GalleryModal({
 
       {/* Full-screen image/video display */}
       <div className="gallery-immersive-scroll" ref={scrollContainerRef}>
-        {images.map((img, idx) => (
+        {images.map((src, idx) => (
           <div key={idx} className="gallery-immersive-slide">
             <Image
-              src={img.image}
-              alt={img.title || `Proje görseli ${idx + 1}`}
+              src={src}
+              alt={`${projectInfo.title} — görsel ${idx + 1}`}
               fill
-              style={{ objectFit: "cover" }}
+              style={{ objectFit: "contain", objectPosition: "center" }}
               sizes="100vw"
               priority={idx === currentIndex}
             />
@@ -164,16 +162,16 @@ export default function GalleryModal({
 
       {/* Bottom: Thumbnail strip */}
       <div className="gallery-thumbnail-strip">
-        {images.map((img, idx) => (
+        {images.map((src, idx) => (
           <button
             key={idx}
             className={`gallery-thumbnail ${currentIndex === idx ? "active" : ""}`}
             onClick={() => handleThumbnailClick(idx)}
-            aria-label={`${img.title || "Görsel"} ${idx + 1}`}
+            aria-label={`${projectInfo.title} ${idx + 1}`}
           >
             <Image
-              src={img.image}
-              alt={img.title || `Küçük resim ${idx + 1}`}
+              src={src}
+              alt={`${projectInfo.title} küçük resim ${idx + 1}`}
               fill
               style={{ objectFit: "cover" }}
               sizes="80px"

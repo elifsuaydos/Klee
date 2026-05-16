@@ -168,6 +168,8 @@ export default function KleeHeroAnimation() {
   const cloverRef = useRef(null);
   const introScreenRef = useRef(null);
   const introTextRef = useRef(null);
+  const glowLayerRef = useRef(null);
+  const tintLayerRef = useRef(null);
 
   const step1Ref = useRef(null);
   const step2Ref = useRef(null);
@@ -199,6 +201,31 @@ export default function KleeHeroAnimation() {
 
       const topBar = document.querySelector("#top-bar");
       let heroComplete = false;
+
+      const glowLayer = glowLayerRef.current;
+      if (glowLayer) {
+        glowLayer.style.setProperty("--gx", "50%");
+        glowLayer.style.setProperty("--gy", "50%");
+        glowLayer.style.setProperty("--glow-color", "transparent");
+        glowLayer.style.setProperty("--glow-opacity", "0");
+      }
+      const tintLayer = tintLayerRef.current;
+      if (tintLayer) {
+        tintLayer.style.setProperty("--tint-color", "transparent");
+        tintLayer.style.setProperty("--tint-opacity", "0");
+      }
+
+      // Top-bar Klee text: shift left so it sits at TRUE viewport center
+      // during the hero animation. Will slide back to its natural position
+      // during the converge phase as the clover lands in the slot beside it.
+      const navLogoNodeInit = document.querySelector(".navbar-clover-logo");
+      const slotW = navLogoNodeInit?.offsetWidth ?? 28;
+      const brandGap = 8;
+      const kleeOffsetX = -(slotW + brandGap) / 2;
+      const kleeTextNode = document.querySelector(".top-bar-klee-text");
+      if (kleeTextNode) {
+        gsap.set(kleeTextNode, { x: kleeOffsetX });
+      }
 
       const isMobile = () => section.clientWidth < 768;
       const isLandscape = () =>
@@ -359,6 +386,32 @@ export default function KleeHeroAnimation() {
         },
         "step1",
       );
+      if (glowLayer) {
+        master.to(
+          glowLayer,
+          {
+            "--gx": "18%",
+            "--gy": "22%",
+            "--glow-color": "#D14C18",
+            "--glow-opacity": "0.55",
+            duration: 3,
+            ease: "expo.inOut",
+          },
+          "step1",
+        );
+      }
+      if (tintLayer) {
+        master.to(
+          tintLayer,
+          {
+            "--tint-color": "#D14C18",
+            "--tint-opacity": "0.12",
+            duration: 3,
+            ease: "expo.inOut",
+          },
+          "step1",
+        );
+      }
       master.to(
         step1Ref.current.querySelectorAll(".char"),
         {
@@ -426,6 +479,32 @@ export default function KleeHeroAnimation() {
         },
         "step2",
       );
+      if (glowLayer) {
+        master.to(
+          glowLayer,
+          {
+            "--gx": "82%",
+            "--gy": "78%",
+            "--glow-color": "#B2AB2B",
+            "--glow-opacity": "0.55",
+            duration: 3,
+            ease: "expo.inOut",
+          },
+          "step2",
+        );
+      }
+      if (tintLayer) {
+        master.to(
+          tintLayer,
+          {
+            "--tint-color": "#B2AB2B",
+            "--tint-opacity": "0.12",
+            duration: 3,
+            ease: "expo.inOut",
+          },
+          "step2",
+        );
+      }
       master.to(
         step2Ref.current.querySelectorAll(".char"),
         {
@@ -493,6 +572,32 @@ export default function KleeHeroAnimation() {
         },
         "step3",
       );
+      if (glowLayer) {
+        master.to(
+          glowLayer,
+          {
+            "--gx": "18%",
+            "--gy": "78%",
+            "--glow-color": "#7C9DD2",
+            "--glow-opacity": "0.55",
+            duration: 3,
+            ease: "expo.inOut",
+          },
+          "step3",
+        );
+      }
+      if (tintLayer) {
+        master.to(
+          tintLayer,
+          {
+            "--tint-color": "#7C9DD2",
+            "--tint-opacity": "0.12",
+            duration: 3,
+            ease: "expo.inOut",
+          },
+          "step3",
+        );
+      }
       master.to(
         step3Ref.current.querySelectorAll(".char"),
         {
@@ -560,6 +665,32 @@ export default function KleeHeroAnimation() {
         },
         "step4",
       );
+      if (glowLayer) {
+        master.to(
+          glowLayer,
+          {
+            "--gx": "82%",
+            "--gy": "22%",
+            "--glow-color": "#F4D68C",
+            "--glow-opacity": "0.6",
+            duration: 3,
+            ease: "expo.inOut",
+          },
+          "step4",
+        );
+      }
+      if (tintLayer) {
+        master.to(
+          tintLayer,
+          {
+            "--tint-color": "#F4D68C",
+            "--tint-opacity": "0.14",
+            duration: 3,
+            ease: "expo.inOut",
+          },
+          "step4",
+        );
+      }
       master.to(
         step4Ref.current.querySelectorAll(".char"),
         {
@@ -629,6 +760,35 @@ export default function KleeHeroAnimation() {
         },
         "converge",
       );
+      if (glowLayer) {
+        master.to(
+          glowLayer,
+          {
+            "--glow-opacity": "0",
+            duration: 1.2,
+            ease: "power2.inOut",
+          },
+          "converge",
+        );
+      }
+      if (tintLayer) {
+        master.to(
+          tintLayer,
+          {
+            "--tint-opacity": "0",
+            duration: 1.2,
+            ease: "power2.inOut",
+          },
+          "converge",
+        );
+      }
+      if (kleeTextNode) {
+        master.to(
+          kleeTextNode,
+          { x: 0, duration: 1.0, ease: "power2.inOut" },
+          "converge+=0.9",
+        );
+      }
       master.fromTo(
         finalContentRef.current,
         { opacity: 0, y: 40 },
@@ -667,6 +827,13 @@ export default function KleeHeroAnimation() {
       }}
       aria-label="Klee animated hero"
     >
+      {/* ── Color glow layer (synced with clover corner travel) ─── */}
+      <div
+        ref={glowLayerRef}
+        className="hero-glow-layer"
+        aria-hidden="true"
+      />
+
       {/* ── Intro screen: tagline only (no scroll prompt — replaced by scroll progress bar) */}
       <div
         ref={introScreenRef}
@@ -674,7 +841,12 @@ export default function KleeHeroAnimation() {
         aria-hidden="true"
       >
         <h2 ref={introTextRef} className="hero-intro-text">
-          <SplitTextChars text="Klee ile HAYALİNDEKİ WEBSİTENE kavuş" />
+          <SplitTextChars text="Klee ile " />
+          <span className="hero-intro-emphasis">
+            <SplitTextChars text="Hayalindeki Websitene" />
+          </span>
+          <br/>
+          <SplitTextChars text=" kavuş." />
         </h2>
       </div>
       {/* ── Single clover SVG (all petals as one unit) ──────────────── */}

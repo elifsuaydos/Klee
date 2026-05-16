@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
-import Image from "next/image";
 import KleeHeroAnimation from "./components/KleeHeroAnimation";
 import { RandomLetterSwapPingPong } from "./components/RandomLetterSwap";
 import GalleryModal from "./components/GalleryModal";
+import ImageGallery from "./components/ImageGallery";
 
 /* ================================================
    DATA
@@ -13,6 +13,13 @@ import GalleryModal from "./components/GalleryModal";
 const PROJECTS_GALLERY = [
   {
     image: "/project-1.png",
+    images: [
+      "/project-1.png",
+      "/project-1.png",
+      "/project-1.png",
+      "/project-1.png",
+      "/project-1.png",
+    ],
     tag: "E-Ticaret",
     tagClass: "tag-blue",
     title: "Luxe Commerce",
@@ -20,6 +27,13 @@ const PROJECTS_GALLERY = [
   },
   {
     image: "/project-2.png",
+    images: [
+      "/project-2.png",
+      "/project-2.png",
+      "/project-2.png",
+      "/project-2.png",
+      "/project-2.png",
+    ],
     tag: "Mobil Uygulama",
     tagClass: "tag-green",
     title: "FitTrack",
@@ -27,6 +41,13 @@ const PROJECTS_GALLERY = [
   },
   {
     image: "/project-3.png",
+    images: [
+      "/project-3.png",
+      "/project-3.png",
+      "/project-3.png",
+      "/project-3.png",
+      "/project-3.png",
+    ],
     tag: "Emlak",
     tagClass: "tag-red",
     title: "Evora",
@@ -34,6 +55,13 @@ const PROJECTS_GALLERY = [
   },
   {
     image: "/project-4.png",
+    images: [
+      "/project-4.png",
+      "/project-4.png",
+      "/project-4.png",
+      "/project-4.png",
+      "/project-4.png",
+    ],
     tag: "SaaS",
     tagClass: "tag-yellow",
     title: "DataPulse",
@@ -41,6 +69,13 @@ const PROJECTS_GALLERY = [
   },
   {
     image: "/project-5.png",
+    images: [
+      "/project-5.png",
+      "/project-5.png",
+      "/project-5.png",
+      "/project-5.png",
+      "/project-5.png",
+    ],
     tag: "Yemek Sipariş",
     tagClass: "tag-red",
     title: "TasteHub",
@@ -128,7 +163,9 @@ function TopBar({ onMenuOpen }) {
           <span />
           <span />
         </span>
-        <span className="menu-trigger-label">Menu</span>
+        <span className="menu-trigger-label">
+          <RandomLetterSwapPingPong label="MENU" staggerDuration={0.025} />
+        </span>
       </button>
 
       {/* Center: Klee branding */}
@@ -222,7 +259,9 @@ function MenuOverlay({ isOpen, onClose }) {
         >
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>
-        <span>Kapat</span>
+        <span>
+          <RandomLetterSwapPingPong label="KAPAT" staggerDuration={0.025} />
+        </span>
       </button>
 
       <nav className="menu-overlay-nav" aria-label="Sayfa navigasyonu">
@@ -276,30 +315,52 @@ function MenuOverlay({ isOpen, onClose }) {
 }
 
 /* ================================================
-   SCROLL PROGRESS INDICATOR (bottom right)
+   SCROLL PROGRESS INDICATOR (bottom right) — rAF + scaleX, no React state
    ================================================ */
 function ScrollProgress() {
-  const [progress, setProgress] = useState(0);
+  const barRef = useRef(null);
 
   useEffect(() => {
-    const handleScroll = () => {
+    let rafId = 0;
+    let queued = false;
+    const update = () => {
+      queued = false;
+      if (!barRef.current) return;
+      // When hero handoff completes, snap bar to full
+      if (document.body.dataset.heroComplete === "true") {
+        barRef.current.style.transform = "scaleX(1)";
+        return;
+      }
       const scrollTop = window.scrollY;
       const docHeight =
         document.documentElement.scrollHeight - window.innerHeight;
       const pct = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
-      setProgress(pct);
+      barRef.current.style.transform = `scaleX(${pct})`;
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => {
+      if (!queued) {
+        queued = true;
+        rafId = requestAnimationFrame(update);
+      }
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    // React to hero-complete flag flips (handoff moment)
+    const mo = new MutationObserver(onScroll);
+    mo.observe(document.body, { attributes: true, attributeFilter: ["data-hero-complete"] });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      mo.disconnect();
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   return (
     <div className="scroll-progress-indicator" aria-hidden="true">
       <div className="scroll-progress-track">
-        <div
-          className="scroll-progress-bar"
-          style={{ width: `${progress * 100}%` }}
-        />
+        <div ref={barRef} className="scroll-progress-bar" />
       </div>
       <span className="scroll-progress-label">aşağı kaydır</span>
     </div>
@@ -313,8 +374,14 @@ function ScrollProgress() {
    ================================================ */
 function ProjectsSection() {
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [galleryIndex, setGalleryIndex] = useState(0);
-  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [galleryProjectIndex, setGalleryProjectIndex] = useState(0);
+
+  const handleItemClick = useCallback((idx) => {
+    setGalleryProjectIndex(idx);
+    setGalleryOpen(true);
+  }, []);
+
+  const activeProject = PROJECTS_GALLERY[galleryProjectIndex] ?? PROJECTS_GALLERY[0];
 
   return (
     <section className="projects" id="projects">
@@ -349,65 +416,20 @@ function ProjectsSection() {
           </p>
         </div>
 
-        {/* Accordion gallery */}
-        <div
-          className="accordion-gallery fade-in-up"
-          onMouseLeave={() => setHoveredIndex(null)}
-        >
-          {PROJECTS_GALLERY.map((project, index) => {
-            const isHovered = hoveredIndex === index;
-            const isCompressed = hoveredIndex !== null && !isHovered;
-
-            return (
-              <div
-                key={`${project.title}-${index}`}
-                className={`accordion-card${isHovered ? " is-hovered" : ""}${isCompressed ? " is-compressed" : ""}`}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onFocus={() => setHoveredIndex(index)}
-                onBlur={() => setHoveredIndex(null)}
-                onClick={() => {
-                  setGalleryIndex(index);
-                  setGalleryOpen(true);
-                }}
-                role="button"
-                tabIndex={0}
-                aria-label={`${project.title} — Galeriyi aç`}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    setGalleryIndex(index);
-                    setGalleryOpen(true);
-                  }
-                }}
-              >
-                {/* Full-bleed image */}
-                <div className="accordion-card-image">
-                  <Image
-                    src={project.image}
-                    alt={project.title}
-                    fill
-                    style={{ objectFit: "cover" }}
-                    sizes="(max-width: 900px) 70vw, (max-width: 1200px) 30vw, 22vw"
-                    priority={index < 2}
-                  />
-                </div>
-
-                {/* Gradient scrim */}
-                <div className="accordion-card-scrim" />
-
-                {/* Expanded overlay */}
-                <div className="accordion-card-overlay">
-                  <h3 className="accordion-card-title">{project.title}</h3>
-                </div>
-              </div>
-            );
-          })}
+        {/* Hover-expand image gallery */}
+        <div className="fade-in-up">
+          <ImageGallery
+            items={PROJECTS_GALLERY}
+            onItemClick={handleItemClick}
+          />
         </div>
       </div>
 
       <GalleryModal
         isOpen={galleryOpen}
-        images={PROJECTS_GALLERY}
-        initialIndex={galleryIndex}
+        images={activeProject.images}
+        project={activeProject}
+        initialIndex={0}
         onClose={() => setGalleryOpen(false)}
       />
     </section>
@@ -543,17 +565,39 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
-  // Prevent body scroll when menu is open
+  // Prevent body scroll when menu is open + expose menu-open flag for CSS
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = "hidden";
+      document.body.dataset.menuOpen = "true";
     } else {
       document.body.style.overflow = "";
+      document.body.dataset.menuOpen = "false";
     }
     return () => {
       document.body.style.overflow = "";
     };
   }, [menuOpen]);
+
+  // Dark theme when over .projects section (black bg) — top-bar text turns white
+  useEffect(() => {
+    const projects = document.querySelector(".projects");
+    if (!projects) return;
+    document.body.dataset.theme = "light";
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          document.body.dataset.theme = entry.isIntersecting ? "dark" : "light";
+        });
+      },
+      { rootMargin: "-80px 0px -85% 0px", threshold: 0 },
+    );
+    observer.observe(projects);
+    return () => {
+      observer.disconnect();
+      document.body.dataset.theme = "light";
+    };
+  }, []);
 
   return (
     <>

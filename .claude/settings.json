@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\kgn\\\\Desktop\\\\Klee-main\" -Recurse -File -Name)",
+      "Bash(Select-Object -First 50)",
+      "WebFetch(domain:fonts.google.com)"
+    ]
+  }
+}
