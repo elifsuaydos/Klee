@@ -47,9 +47,8 @@ export default function HorizonHeroSection() {
     planet: null, halo: null, clover: null, animationId: null,
     // camera targets
     targetCameraX: 0, targetCameraY: 30, targetCameraZ: 300,
-    // clover targets
-    targetCloverScale: 0, cloverScale: 0,
-    cloverOpacityFactor: 1, // fades out >85% scroll
+    // clover: fixed world-space scale, only opacity is driven by scroll
+    cloverOpacityFactor: 0, // 0 = hidden, 1 = fully visible
     // halo targets
     targetHaloScale: 1, currentHaloScale: 1,
     targetHaloIntensity: 1, currentHaloIntensity: 1,
@@ -313,7 +312,11 @@ export default function HorizonHeroSection() {
         group.add(mesh);
       });
 
-      group.scale.set(0.001, 0.001, 0.001);
+      // Fixed world-space scale — perspective makes it tiny from far, large up close
+      // PETAL_PATH geom ~40 units wide; scale=4 → 160 unit wide clover
+      // At camera start (dist ~2290): appears ~5% of screen height
+      // At camera end  (dist ~140) : appears ~79% of screen height → triggers white overlay
+      group.scale.set(4, 4, 4);
       refs.scene.add(group);
       refs.clover = group;
     };
@@ -369,16 +372,11 @@ export default function HorizonHeroSection() {
         m.position.y = (m.userData.baseZ ?? -100) + 50 + Math.cos(time * 0.15) * p;
       });
 
-      // Clover: smooth scale + billboard + combined opacity
+      // Clover: fixed world-scale, billboard, opacity only driven by scroll
       if (refs.clover && refs.camera) {
-        refs.cloverScale += (refs.targetCloverScale - refs.cloverScale) * 0.08;
-        const s = Math.max(refs.cloverScale * 12, 0.001);
-        refs.clover.scale.set(s, s, s);
         refs.clover.lookAt(refs.camera.position);
         refs.clover.rotateZ(0.004);
-
-        // Opacity = cloverScale factor × fade-out factor
-        const op = Math.min(refs.cloverScale * 2, 1) * refs.cloverOpacityFactor;
+        const op = refs.cloverOpacityFactor;
         refs.clover.children.forEach(p => { p.material.opacity = op; });
       }
 
@@ -454,13 +452,11 @@ export default function HorizonHeroSection() {
         m.position.z = progress > 0.45 ? 600000 : m.userData.baseZ;
       });
 
-      // ── Three.js Clover (appears 0.45→0.70, fades out 0.85→0.95) ──
-      refs.targetCloverScale  = progress < 0.45 ? 0
-        : progress < 0.70 ? linearMap(progress, 0.45, 0.70)
-        : 1;
-
-      refs.cloverOpacityFactor = progress > 0.95 ? 0
-        : progress > 0.85 ? linearMap(0.95 - progress, 0, 0.10)
+      // ── Three.js Clover opacity: appears as HORIZON fades (0.15→0.25), hides before white (0.85→0.95) ──
+      refs.cloverOpacityFactor = progress < 0.15 ? 0
+        : progress < 0.25 ? linearMap(progress, 0.15, 0.25)   // fade in
+        : progress > 0.95 ? 0
+        : progress > 0.85 ? linearMap(0.95 - progress, 0, 0.10) // fade out
         : 1;
 
       // ── Halo expansion (0.65→0.95: scale 1→5.5, intensity 1→2.5) ──
