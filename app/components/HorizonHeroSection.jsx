@@ -16,49 +16,51 @@ const PETAL_PATH =
 
 const PLANET_Z = -2000;
 
-const PETAL_COLORS = [
-  '#D14C18', // ketchup-red   / TILSIM
-  '#F4D68C', // sunshine-yellow / KIVILCIM
-  '#7C9DD2', // sky-blue      / TUTKU
-  '#B2AB2B', // olive-green   / VIZYON
-];
-const PETAL_ANGLES = [
-  -Math.PI / 4,
-   Math.PI / 4,
-  -3 * Math.PI / 4,
-   3 * Math.PI / 4,
-];
+const PETAL_COLORS  = ['#D14C18', '#F4D68C', '#7C9DD2', '#B2AB2B'];
+const PETAL_ANGLES  = [-Math.PI / 4, Math.PI / 4, -3 * Math.PI / 4, 3 * Math.PI / 4];
+
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+function linearMap(v, a, b) { return clamp01((v - a) / (b - a)); }
 
 export default function HorizonHeroSection() {
-  const containerRef    = useRef(null);
-  const canvasRef       = useRef(null);
-  const titleRef        = useRef(null);
-  const subtitleRef     = useRef(null);
+  const containerRef      = useRef(null);
+  const canvasRef         = useRef(null);
+  const titleRef          = useRef(null);
+  const subtitleRef       = useRef(null);
   const scrollProgressRef = useRef(null);
-  const menuRef         = useRef(null);
+  const menuRef           = useRef(null);
 
   const smoothCameraPos = useRef({ x: 0, y: 30, z: 300 });
 
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [currentSection, setCurrentSection] = useState(0);
-  const [isReady, setIsReady]     = useState(false);
-  const totalSections = 2;
+  const [scrollProgress,    setScrollProgress]    = useState(0);
+  const [currentSection,    setCurrentSection]    = useState(0);
+  const [isReady,           setIsReady]           = useState(false);
+  const [whiteOpacity,      setWhiteOpacity]      = useState(0);
+  const [finalCloverOpacity,setFinalCloverOpacity]= useState(0);
+
+  // totalSections=3 → 400vh page, 300vh scroll space → 6 distinct phases
+  const totalSections = 3;
 
   const threeRefs = useRef({
     scene: null, camera: null, renderer: null, composer: null,
     stars: [], nebula: null, mountains: [], locations: [],
-    planet: null, clover: null, animationId: null,
+    planet: null, halo: null, clover: null, animationId: null,
+    // camera targets
     targetCameraX: 0, targetCameraY: 30, targetCameraZ: 300,
+    // clover targets
     targetCloverScale: 0, cloverScale: 0,
+    cloverOpacityFactor: 1, // fades out >85% scroll
+    // halo targets
+    targetHaloScale: 1, currentHaloScale: 1,
+    targetHaloIntensity: 1, currentHaloIntensity: 1,
   });
 
-  /* ── Three.js init ─────────────────────────────────────── */
+  /* ─── Three.js init ──────────────────────────────────────── */
   useEffect(() => {
     const initThree = () => {
       const { current: refs } = threeRefs;
 
       refs.scene = new THREE.Scene();
-      // NO scene fog — it would completely hide the planet at 2000+ units
 
       refs.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3500);
       refs.camera.position.set(0, 30, 300);
@@ -71,15 +73,11 @@ export default function HorizonHeroSection() {
 
       refs.composer = new EffectComposer(refs.renderer);
       refs.composer.addPass(new RenderPass(refs.scene, refs.camera));
-      // Low threshold so Klee brand colors actually bloom
       refs.composer.addPass(new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight),
-        0.7,   // strength
-        0.6,   // radius
-        0.2    // threshold — Klee colors (luminance ~0.4–0.8) will glow
+        0.7, 0.6, 0.2
       ));
 
-      // Lighting for planet surface
       refs.scene.add(new THREE.AmbientLight(0x222244, 0.6));
       const dir = new THREE.DirectionalLight(0x5577cc, 1.0);
       dir.position.set(600, 400, 300);
@@ -96,7 +94,7 @@ export default function HorizonHeroSection() {
       setIsReady(true);
     };
 
-    /* ── Stars ─────────────────────────────────────────────── */
+    /* ── Stars ────────────────────────────────────────────── */
     const createStarField = () => {
       const { current: refs } = threeRefs;
       const starCount = 5000;
@@ -152,7 +150,7 @@ export default function HorizonHeroSection() {
       }
     };
 
-    /* ── Nebula ─────────────────────────────────────────────── */
+    /* ── Nebula (static, behind planet) ──────────────────── */
     const createNebula = () => {
       const { current: refs } = threeRefs;
       const mat = new THREE.ShaderMaterial({
@@ -182,12 +180,12 @@ export default function HorizonHeroSection() {
         transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false,
       });
       const nebula = new THREE.Mesh(new THREE.PlaneGeometry(8000, 4000, 80, 80), mat);
-      nebula.position.z = -2500; // behind planet, never moves
+      nebula.position.z = -2500;
       refs.scene.add(nebula);
       refs.nebula = nebula;
     };
 
-    /* ── Mountains ──────────────────────────────────────────── */
+    /* ── Mountains ───────────────────────────────────────── */
     const createMountains = () => {
       const { current: refs } = threeRefs;
       const layers = [
@@ -196,7 +194,7 @@ export default function HorizonHeroSection() {
         { distance: -150, height: 100, color: 0x0f3460, opacity: 0.7  },
         { distance: -200, height: 120, color: 0x0a4668, opacity: 0.5  },
       ];
-      layers.forEach((layer) => {
+      layers.forEach(layer => {
         const pts = [];
         for (let i = 0; i <= 50; i++) {
           const x = (i / 50 - 0.5) * 1000;
@@ -218,74 +216,80 @@ export default function HorizonHeroSection() {
       });
     };
 
-    /* ── Planet — dim solid sphere + faint halo ─────────────── */
+    /* ── Planet — dim solid sphere + dynamic halo ────────── */
     const createPlanet = () => {
       const { current: refs } = threeRefs;
       const group = new THREE.Group();
       group.position.set(0, 10, PLANET_Z);
 
-      // Solid sphere — subdued presence, lets clover be the star
+      // Solid sphere — dark, minimal emissive (planet is background presence)
       const solidMat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(0x1a2540),
-        roughness: 0.9, metalness: 0.0,
-        emissive: new THREE.Color(0x0a1428),
-        emissiveIntensity: 0.5,
+        color: new THREE.Color(0x0d1520),
+        roughness: 0.95, metalness: 0.0,
+        emissive: new THREE.Color(0x050a10),
+        emissiveIntensity: 0.4,
       });
       group.add(new THREE.Mesh(new THREE.SphereGeometry(180, 48, 48), solidMat));
 
-      // Dim halo rim
+      // Halo — intensity uniform controls brightness AND color warmth (blue→white)
       const haloMat = new THREE.ShaderMaterial({
-        uniforms: { time: { value: 0 } },
+        uniforms: {
+          time:      { value: 0 },
+          intensity: { value: 1.0 }, // 1→2.5 as scroll progresses
+        },
         vertexShader: `
           varying vec3 vN;
-          void main() { vN = normalize(normalMatrix*normal); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-        fragmentShader: `
-          varying vec3 vN; uniform float time;
           void main() {
-            float i = pow(0.6 - dot(vN, vec3(0,0,1)), 2.0);
-            vec3 c = vec3(0.3,0.5,0.8)*i*(sin(time*1.2)*0.08+0.92);
-            gl_FragColor = vec4(c, i*0.12);
+            vN = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }`,
+        fragmentShader: `
+          varying vec3 vN;
+          uniform float time;
+          uniform float intensity;
+          void main() {
+            float fresnel = pow(0.65 - dot(vN, vec3(0.0, 0.0, 1.0)), 2.0);
+            // colour shifts from blue-steel → near-white as intensity rises
+            vec3 coldCol = vec3(0.3, 0.5, 0.85);
+            vec3 warmCol = vec3(0.92, 0.96, 1.0);
+            float t = clamp((intensity - 1.0) / 1.5, 0.0, 1.0);
+            vec3 col = mix(coldCol, warmCol, t) * fresnel * (sin(time * 1.2) * 0.06 + 0.94);
+            float alpha = fresnel * 0.14 * intensity;
+            gl_FragColor = vec4(col, alpha);
           }`,
         side: THREE.BackSide, blending: THREE.AdditiveBlending, transparent: true,
       });
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(215, 28, 28), haloMat));
+      const haloMesh = new THREE.Mesh(new THREE.SphereGeometry(215, 28, 28), haloMat);
+      group.add(haloMesh);
 
       refs.scene.add(group);
       refs.planet = group;
+      refs.halo   = haloMesh; // direct ref for scale + uniform updates
     };
 
-    /* ── Clover — 4 Klee-brand petals via SVGLoader ─────────── */
+    /* ── Clover — 4 Klee-brand petals ───────────────────── */
     const createClover = () => {
       const { current: refs } = threeRefs;
       const group = new THREE.Group();
-      group.position.set(0, 10, PLANET_Z + 12); // slightly in front of planet
+      group.position.set(0, 10, PLANET_Z + 12);
 
       let shapes = [];
       try {
         const loader  = new SVGLoader();
         const svgData = loader.parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${PETAL_PATH}"/></svg>`);
-        if (svgData.paths && svgData.paths.length > 0) {
-          shapes = svgData.paths[0].toShapes(true);
-        }
+        if (svgData.paths?.length > 0) shapes = svgData.paths[0].toShapes(true);
       } catch (e) {
-        console.warn('[HorizonHero] SVGLoader failed, using fallback petal');
+        console.warn('[HorizonHero] SVGLoader failed, using fallback');
       }
 
       let petalGeo;
       if (shapes.length > 0) {
         petalGeo = new THREE.ShapeGeometry(shapes);
-        // Center around origin
         petalGeo.computeBoundingBox();
         const bb = petalGeo.boundingBox;
-        petalGeo.translate(
-          -((bb.min.x + bb.max.x) / 2),
-          -((bb.min.y + bb.max.y) / 2),
-          0
-        );
-        // Flip Y — SVG y-down vs Three.js y-up
+        petalGeo.translate(-((bb.min.x + bb.max.x) / 2), -((bb.min.y + bb.max.y) / 2), 0);
         petalGeo.applyMatrix4(new THREE.Matrix4().makeScale(1, -1, 1));
       } else {
-        // Fallback: teardrop-style heart petal
         const shape = new THREE.Shape();
         shape.moveTo(0, 0);
         shape.bezierCurveTo(-12, -4, -20, -12, -20, -20);
@@ -295,23 +299,20 @@ export default function HorizonHeroSection() {
         petalGeo = new THREE.ShapeGeometry(shape);
         petalGeo.computeBoundingBox();
         const bb = petalGeo.boundingBox;
-        petalGeo.translate(-((bb.min.x+bb.max.x)/2), -((bb.min.y+bb.max.y)/2), 0);
+        petalGeo.translate(-((bb.min.x + bb.max.x) / 2), -((bb.min.y + bb.max.y) / 2), 0);
       }
 
       PETAL_COLORS.forEach((hex, idx) => {
         const mat = new THREE.MeshBasicMaterial({
           color: new THREE.Color(hex),
-          transparent: true,
-          opacity: 0,
-          side: THREE.DoubleSide,
-          depthWrite: false,
+          transparent: true, opacity: 0,
+          side: THREE.DoubleSide, depthWrite: false,
         });
         const mesh = new THREE.Mesh(petalGeo.clone(), mat);
         mesh.rotation.z = PETAL_ANGLES[idx];
         group.add(mesh);
       });
 
-      // Start invisible
       group.scale.set(0.001, 0.001, 0.001);
       refs.scene.add(group);
       refs.clover = group;
@@ -322,20 +323,31 @@ export default function HorizonHeroSection() {
       refs.locations = refs.mountains.map(m => m.position.z);
     };
 
-    /* ── Render loop ─────────────────────────────────────────── */
+    /* ── Render loop ─────────────────────────────────────── */
     const animate = () => {
       const { current: refs } = threeRefs;
       refs.animationId = requestAnimationFrame(animate);
       const time = Date.now() * 0.001;
 
+      // Stars
       refs.stars.forEach(sf => { if (sf.material.uniforms) sf.material.uniforms.time.value = time; });
+      // Nebula
       if (refs.nebula?.material.uniforms) refs.nebula.material.uniforms.time.value = time * 0.5;
 
+      // Planet slow rotation + halo time
       if (refs.planet) {
-        refs.planet.rotation.y  += 0.0006;
-        refs.planet.rotation.x  += 0.0002;
-        const halo = refs.planet.children[1];
-        if (halo?.material.uniforms) halo.material.uniforms.time.value = time;
+        refs.planet.rotation.y += 0.0005;
+        refs.planet.rotation.x += 0.0002;
+      }
+      if (refs.halo?.material.uniforms) {
+        refs.halo.material.uniforms.time.value = time;
+
+        // Smooth halo scale & intensity
+        refs.currentHaloScale     += (refs.targetHaloScale     - refs.currentHaloScale)     * 0.055;
+        refs.currentHaloIntensity += (refs.targetHaloIntensity - refs.currentHaloIntensity) * 0.055;
+
+        refs.halo.scale.setScalar(refs.currentHaloScale);
+        refs.halo.material.uniforms.intensity.value = refs.currentHaloIntensity;
       }
 
       // Smooth camera
@@ -344,33 +356,29 @@ export default function HorizonHeroSection() {
         smoothCameraPos.current.x += (refs.targetCameraX - smoothCameraPos.current.x) * s;
         smoothCameraPos.current.y += (refs.targetCameraY - smoothCameraPos.current.y) * s;
         smoothCameraPos.current.z += (refs.targetCameraZ - smoothCameraPos.current.z) * s;
-        refs.camera.position.x = smoothCameraPos.current.x + Math.sin(time*0.1)*1.5;
-        refs.camera.position.y = smoothCameraPos.current.y + Math.cos(time*0.15)*0.8;
+        refs.camera.position.x = smoothCameraPos.current.x + Math.sin(time * 0.1) * 1.5;
+        refs.camera.position.y = smoothCameraPos.current.y + Math.cos(time * 0.15) * 0.8;
         refs.camera.position.z = smoothCameraPos.current.z;
         refs.camera.lookAt(0, 10, PLANET_Z);
       }
 
-      refs.mountains.forEach((m, i) => {
-        const p = 1 + i * 0.5;
-        m.position.x = Math.sin(time*0.1)*2*p;
-        // Keep y at base position with gentle bob
-        m.position.y = (m.userData.baseZ ?? -100) + 50 + Math.cos(time*0.15)*p;
+      // Mountains gentle drift
+      refs.mountains.forEach(m => {
+        const p = 1 + (m.userData.index ?? 0) * 0.5;
+        m.position.x = Math.sin(time * 0.1) * 2 * p;
+        m.position.y = (m.userData.baseZ ?? -100) + 50 + Math.cos(time * 0.15) * p;
       });
 
-      // Clover: smooth scale + billboard + spin
+      // Clover: smooth scale + billboard + combined opacity
       if (refs.clover && refs.camera) {
         refs.cloverScale += (refs.targetCloverScale - refs.cloverScale) * 0.08;
-        const s = Math.max(refs.cloverScale * 12, 0.001); // scale 12 = ~480 units wide at full
+        const s = Math.max(refs.cloverScale * 12, 0.001);
         refs.clover.scale.set(s, s, s);
-
-        // Face the camera each frame
         refs.clover.lookAt(refs.camera.position);
+        refs.clover.rotateZ(0.004);
 
-        // All petals idle-spin as one clover
-        refs.clover.rotateZ(0.005);
-
-        // Petal opacity
-        const op = Math.min(refs.cloverScale * 2, 1);
+        // Opacity = cloverScale factor × fade-out factor
+        const op = Math.min(refs.cloverScale * 2, 1) * refs.cloverOpacityFactor;
         refs.clover.children.forEach(p => { p.material.opacity = op; });
       }
 
@@ -396,8 +404,8 @@ export default function HorizonHeroSection() {
       refs.stars.forEach(s    => { s.geometry.dispose(); s.material.dispose(); });
       refs.mountains.forEach(m => { m.geometry.dispose(); m.material.dispose(); });
       if (refs.nebula)  { refs.nebula.geometry.dispose(); refs.nebula.material.dispose(); }
-      if (refs.planet)  { refs.planet.children.forEach(c => { c.geometry.dispose(); c.material.dispose(); }); refs.scene?.remove(refs.planet); }
-      if (refs.clover)  { refs.clover.children.forEach(c => { c.geometry.dispose(); c.material.dispose(); }); refs.scene?.remove(refs.clover); }
+      if (refs.planet)  { refs.planet.children.forEach(c => { c.geometry?.dispose(); c.material?.dispose(); }); refs.scene?.remove(refs.planet); }
+      if (refs.clover)  { refs.clover.children.forEach(c => { c.geometry?.dispose(); c.material?.dispose(); }); refs.scene?.remove(refs.clover); }
       if (refs.renderer) refs.renderer.dispose();
     };
   }, []);
@@ -421,37 +429,50 @@ export default function HorizonHeroSection() {
       const progress  = maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
       setScrollProgress(progress);
 
-      const totalProg     = progress * totalSections;
-      const newSection    = Math.min(Math.floor(totalProg), totalSections - 1);
-      const sectionProg   = totalProg >= totalSections ? 1 : totalProg % 1;
+      const totalProg   = progress * totalSections;
+      const newSection  = Math.min(Math.floor(totalProg), totalSections - 1);
+      const sectionProg = totalProg >= totalSections ? 1 : totalProg % 1;
       setCurrentSection(newSection);
 
       const { current: refs } = threeRefs;
 
-      const cameraPositions = [
-        { x: 0, y: 30, z: 300  },   // HORIZON
-        { x: 0, y: 20, z: -300 },   // COSMOS
-        { x: 0, y: 10, z: -1700 },  // APPROACH
+      // ── Camera path (4 waypoints for 3 sections) ──
+      const cam = [
+        { x: 0, y: 30, z: 300   },  // section 0 start — HORIZON
+        { x: 0, y: 20, z: -300  },  // section 1 start — COSMOS
+        { x: 0, y: 10, z: -1000 },  // section 2 start — APPROACH
+        { x: 0, y: 10, z: -1850 },  // section 2 end   — CLOSE (near planet)
       ];
-      const cur  = cameraPositions[newSection]     ?? cameraPositions[cameraPositions.length - 1];
-      const next = cameraPositions[newSection + 1] ?? cur;
+      const cur  = cam[newSection]     ?? cam[cam.length - 1];
+      const next = cam[newSection + 1] ?? cur;
       refs.targetCameraX = cur.x + (next.x - cur.x) * sectionProg;
       refs.targetCameraY = cur.y + (next.y - cur.y) * sectionProg;
       refs.targetCameraZ = cur.z + (next.z - cur.z) * sectionProg;
 
-      // Mountains disappear at 55%
+      // ── Mountains disappear at 45% ──
       refs.mountains.forEach(m => {
-        m.position.z = progress > 0.55 ? 600000 : m.userData.baseZ;
+        m.position.z = progress > 0.45 ? 600000 : m.userData.baseZ;
       });
 
-      // Clover: start appearing at 45%, full at 70%
-      let cloverTarget = 0;
-      if (progress >= 0.70) {
-        cloverTarget = 1;
-      } else if (progress > 0.45) {
-        cloverTarget = (progress - 0.45) / 0.25;
-      }
-      refs.targetCloverScale = cloverTarget;
+      // ── Three.js Clover (appears 0.45→0.70, fades out 0.85→0.95) ──
+      refs.targetCloverScale  = progress < 0.45 ? 0
+        : progress < 0.70 ? linearMap(progress, 0.45, 0.70)
+        : 1;
+
+      refs.cloverOpacityFactor = progress > 0.95 ? 0
+        : progress > 0.85 ? linearMap(0.95 - progress, 0, 0.10)
+        : 1;
+
+      // ── Halo expansion (0.65→0.95: scale 1→5.5, intensity 1→2.5) ──
+      const haloT = linearMap(progress, 0.65, 0.95);
+      refs.targetHaloScale     = 1 + haloT * 4.5;   // 1 → 5.5
+      refs.targetHaloIntensity = 1 + haloT * 1.5;   // 1 → 2.5
+
+      // ── DOM: white overlay (0.85→0.95) ──
+      setWhiteOpacity(linearMap(progress, 0.85, 0.95));
+
+      // ── DOM: final Klee clover (0.90→1.00) ──
+      setFinalCloverOpacity(linearMap(progress, 0.90, 1.00));
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -464,8 +485,10 @@ export default function HorizonHeroSection() {
       <span key={i} className="cosmos-title-char title-char">{char}</span>
     ));
 
-  // Hero title fades out once scrolling begins
+  // HORIZON title fades fast as scroll begins
   const titleOpacity = Math.max(0, 1 - scrollProgress * 5);
+  // Scroll progress UI fades as white overlay appears
+  const scrollUIOpacity = Math.max(0, 1 - linearMap(scrollProgress, 0.82, 0.90));
 
   return (
     <div ref={containerRef} className="cosmos-style hero-container">
@@ -477,8 +500,9 @@ export default function HorizonHeroSection() {
         <div className="cosmos-vertical-text">SPACE</div>
       </div>
 
-      {/* HORIZON title — fades out on scroll */}
-      <div className="cosmos-hero-content" style={{ opacity: titleOpacity, pointerEvents: titleOpacity < 0.05 ? 'none' : 'auto' }}>
+      {/* HORIZON title — fades on scroll */}
+      <div className="cosmos-hero-content"
+        style={{ opacity: titleOpacity, pointerEvents: titleOpacity < 0.05 ? 'none' : 'auto' }}>
         <h1 ref={titleRef} className="cosmos-hero-title" style={{ visibility: 'hidden' }}>
           {splitTitle('HORIZON')}
         </h1>
@@ -488,8 +512,9 @@ export default function HorizonHeroSection() {
         </div>
       </div>
 
-      {/* Scroll progress */}
-      <div ref={scrollProgressRef} className="cosmos-scroll-progress" style={{ visibility: 'hidden' }}>
+      {/* Scroll progress indicator — fades before white overlay */}
+      <div ref={scrollProgressRef} className="cosmos-scroll-progress"
+        style={{ visibility: 'hidden', opacity: scrollUIOpacity }}>
         <div className="cosmos-scroll-text">SCROLL</div>
         <div className="cosmos-progress-track">
           <div className="cosmos-progress-fill" style={{ width: `${scrollProgress * 100}%` }} />
@@ -499,8 +524,32 @@ export default function HorizonHeroSection() {
         </div>
       </div>
 
-      {/* Scroll spacers — invisible, provide page height for scrolling */}
+      {/* ── White overlay: fades in at ~85% scroll ── */}
+      <div className="cosmos-white-overlay" style={{ opacity: whiteOpacity }} />
+
+      {/* ── DOM Klee clover: final scene on white background ── */}
+      <div className="cosmos-final-clover" style={{ opacity: finalCloverOpacity }}>
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(50, 50)">
+            <g fill="var(--ketchup-red)">
+              <path d={PETAL_PATH} transform="translate(-1, -1) rotate(-45)" />
+            </g>
+            <g fill="var(--sunshine-yellow)">
+              <path d={PETAL_PATH} transform="translate(1, -1) rotate(45)" />
+            </g>
+            <g fill="var(--sky-blue)">
+              <path d={PETAL_PATH} transform="translate(-1, 1) rotate(-135)" />
+            </g>
+            <g fill="var(--olive-green)">
+              <path d={PETAL_PATH} transform="translate(1, 1) rotate(135)" />
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      {/* Scroll spacers — 3 sections = 400vh total page height */}
       <div className="cosmos-scroll-sections">
+        <section className="cosmos-content-section" />
         <section className="cosmos-content-section" />
         <section className="cosmos-content-section" />
       </div>
