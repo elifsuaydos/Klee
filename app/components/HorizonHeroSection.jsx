@@ -305,10 +305,9 @@ export default function HorizonHeroSection() {
 
       // ── Stem ─────────────────────────────────────────────
       const stemMat = mkMat('#2d6e35');
-      group.add(rOrder(Object.assign(
-        new THREE.Mesh(new THREE.CylinderGeometry(1, 1.8, 30, 8), stemMat),
-        { position: new THREE.Vector3(0, -17, 0) }
-      )));
+      const stemMesh = rOrder(new THREE.Mesh(new THREE.CylinderGeometry(1, 1.8, 30, 8), stemMat));
+      stemMesh.position.set(0, -17, 0);
+      group.add(stemMesh);
 
       // ── Petals: lie flat in XZ plane, visible from above ─
       // buildPetalGeo() gives exact Klee shape (meeting point at local origin)
