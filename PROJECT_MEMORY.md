@@ -270,6 +270,16 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 
 > Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
 
+- **[2026-05-16] /horizon: Görünürlük ve layout düzeltmeleri (fog, bloom, yonca)**
+  - Scene fog kaldırıldı — `FogExp2(density=0.00012)` 2000+ birimde planeti %100 gizliyordu.
+  - Bloom threshold `0.85→0.2`, strength `0.45→0.7` — Klee renklerinin luminance'ı 0.43-0.84 arası, artık bloom alıyorlar.
+  - Yonca `progress %45`'te belirmeye başlıyor (`%60` yerine), scale faktörü `8→12`, opacity ×2 hızlı.
+  - `group.rotateZ()` ile tek billboard spin (önceki per-petal spin + lookAt çakışması giderildi).
+  - SVGLoader `try/catch` + procedural fallback petal (SVGLoader başarısız olursa alternatif geometri).
+  - HORIZON DOM başlığı scroll başladıkça fade-out (`opacity = 1 - progress*5`).
+  - Scroll section DOM'u: artık sadece boş `<section>` spacer'lar, görünür metin yok (Three.js IS içerik).
+  - Mountain threshold `0.7→0.55`.
+
 - **[2026-05-16] /horizon: Gezegen + Klee yonca focus animasyonu**
   - `createAtmosphere` → `createPlanet` (solid sphere radius 180 + soluk halo BackSide). Gezegen sabit `z:-2000` konumunda, mat koyu mavi-mor (`#1f2847`).
   - `createClover` eklendi: `SVGLoader` + `PETAL_PATH` ile 4 Three.Shape petal mesh. Renkler: `#D14C18` / `#F4D68C` / `#7C9DD2` / `#B2AB2B`. Billboard + idle z-rotation + scroll-based scale/opacity (progress 0.6→0.85 arası).
