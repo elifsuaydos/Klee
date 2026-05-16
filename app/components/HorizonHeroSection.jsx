@@ -266,20 +266,46 @@ export default function HorizonHeroSection() {
       refs.halo   = haloMesh; // direct ref for scale + uniform updates
     };
 
-    /* ── Clover — 4 Klee-brand petals ───────────────────── */
+    /* ── Clover — grounded 3D flower on planet surface ──── */
     const createClover = () => {
       const { current: refs } = threeRefs;
-      const group = new THREE.Group();
-      group.position.set(0, 10, PLANET_Z + 12);
 
+      // Positioned on TOP of planet sphere: planet center y=10, radius=180 → top y=190
+      const CLOVER_Y = 10 + 180;
+      const group = new THREE.Group();
+      group.position.set(0, CLOVER_Y, PLANET_Z);
+
+      // Scale=2: ~80 units wide.
+      // At HORIZON fade (camera ~y=800, dist ~2200): ~2% screen = barely a bright dot
+      // At final approach (dist ~100): ~43° = cinematic fill
+      const S = 2;
+      group.scale.set(S, S, S);
+
+      const makeMat = (hex) => new THREE.MeshBasicMaterial({
+        color: new THREE.Color(hex),
+        transparent: true, opacity: 0,
+        side: THREE.DoubleSide, depthWrite: false, depthTest: false,
+      });
+      const R = (m) => { m.renderOrder = 100; return m; };
+
+      // ── Stem (dark green cylinder, vertical) ─────────────
+      const stemMat = makeMat('#2d6e35');
+      stemMat.opacity = 0; // controlled same as petals
+      const stemMesh = R(new THREE.Mesh(
+        new THREE.CylinderGeometry(1, 1.8, 30, 8),
+        stemMat
+      ));
+      stemMesh.position.y = -17; // base of petals is at y=0; center of stem 17 below
+      group.add(stemMesh);
+
+      // ── Petals (lying flat in XZ plane — visible from above) ─
       let shapes = [];
       try {
-        const loader  = new SVGLoader();
-        const svgData = loader.parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${PETAL_PATH}"/></svg>`);
+        const svgData = new SVGLoader().parse(
+          `<svg xmlns="http://www.w3.org/2000/svg"><path d="${PETAL_PATH}"/></svg>`
+        );
         if (svgData.paths?.length > 0) shapes = svgData.paths[0].toShapes(true);
-      } catch (e) {
-        console.warn('[HorizonHero] SVGLoader failed, using fallback');
-      }
+      } catch (e) { /* use fallback */ }
 
       let petalGeo;
       if (shapes.length > 0) {
@@ -289,39 +315,33 @@ export default function HorizonHeroSection() {
         petalGeo.translate(-((bb.min.x + bb.max.x) / 2), -((bb.min.y + bb.max.y) / 2), 0);
         petalGeo.applyMatrix4(new THREE.Matrix4().makeScale(1, -1, 1));
       } else {
+        // Simple teardrop petal fallback
         const shape = new THREE.Shape();
-        shape.moveTo(0, 0);
-        shape.bezierCurveTo(-12, -4, -20, -12, -20, -20);
-        shape.bezierCurveTo(-20, -30, -10, -36, 0, -30);
-        shape.bezierCurveTo(10, -36, 20, -30, 20, -20);
-        shape.bezierCurveTo(20, -12, 12, -4, 0, 0);
+        shape.moveTo(0, 0); shape.bezierCurveTo(-10, -3, -18, -10, -18, -18);
+        shape.bezierCurveTo(-18, -28, -8, -34, 0, -28);
+        shape.bezierCurveTo(8, -34, 18, -28, 18, -18);
+        shape.bezierCurveTo(18, -10, 10, -3, 0, 0);
         petalGeo = new THREE.ShapeGeometry(shape);
         petalGeo.computeBoundingBox();
         const bb = petalGeo.boundingBox;
         petalGeo.translate(-((bb.min.x + bb.max.x) / 2), -((bb.min.y + bb.max.y) / 2), 0);
       }
 
-      PETAL_COLORS.forEach((hex, idx) => {
-        const mat = new THREE.MeshBasicMaterial({
-          color: new THREE.Color(hex),
-          transparent: true, opacity: 0,
-          side: THREE.DoubleSide,
-          depthWrite: false,
-          depthTest: false, // renders on top of planet sphere regardless of depth
-        });
-        const mesh = new THREE.Mesh(petalGeo.clone(), mat);
-        mesh.rotation.z = PETAL_ANGLES[idx];
-        mesh.renderOrder = 100; // draw after all other objects
-        group.add(mesh);
-      });
+      // petalsGroup rotated 90° so XY-plane petals now lie in XZ plane (flat, visible from above)
+      const petalsGroup = new THREE.Group();
+      petalsGroup.rotation.x = -Math.PI / 2;
 
-      // Fixed world-space scale — perspective makes it tiny from far, large up close
-      // PETAL_PATH geom ~40 units wide; scale=8 → 320 unit wide clover
-      // At HORIZON fade (camera ~z=-60, dist ~1930): appears ~13% of screen → small but clear
-      // At camera end  (dist ~140) : appears ~100% screen width → triggers white overlay
-      group.scale.set(8, 8, 8);
+      PETAL_COLORS.forEach((hex, idx) => {
+        const mesh = R(new THREE.Mesh(petalGeo.clone(), makeMat(hex)));
+        mesh.rotation.z = PETAL_ANGLES[idx];
+        petalsGroup.add(mesh);
+      });
+      group.add(petalsGroup);
+
       refs.scene.add(group);
       refs.clover = group;
+      refs.cloverStemMat = stemMat;
+      refs.cloverPetalMats = petalsGroup.children.map(m => m.material);
     };
 
     const getLocation = () => {
@@ -365,7 +385,8 @@ export default function HorizonHeroSection() {
         refs.camera.position.x = smoothCameraPos.current.x + Math.sin(time * 0.1) * 1.5;
         refs.camera.position.y = smoothCameraPos.current.y + Math.cos(time * 0.15) * 0.8;
         refs.camera.position.z = smoothCameraPos.current.z;
-        refs.camera.lookAt(0, 10, PLANET_Z);
+        // Always look at the clover on top of the planet
+        refs.camera.lookAt(0, 10 + 180, PLANET_Z);
       }
 
       // Mountains gentle drift
@@ -375,14 +396,12 @@ export default function HorizonHeroSection() {
         m.position.y = (m.userData.baseZ ?? -100) + 50 + Math.cos(time * 0.15) * p;
       });
 
-      // Clover: fixed world-scale, billboard + accumulated spin, opacity only driven by scroll
-      if (refs.clover && refs.camera) {
-        // lookAt resets rotation each frame — accumulate spin separately
-        refs.cloverSpin = (refs.cloverSpin ?? 0) + 0.006;
-        refs.clover.lookAt(refs.camera.position); // face camera
-        refs.clover.rotateZ(refs.cloverSpin);     // apply total spin on top of lookAt
+      // Clover: grounded 3D flower — gentle Y rotation, opacity driven by scroll
+      if (refs.clover) {
+        refs.clover.rotation.y += 0.003; // slow spin around stem axis
         const op = refs.cloverOpacityFactor;
-        refs.clover.children.forEach(p => { p.material.opacity = op; });
+        if (refs.cloverStemMat) refs.cloverStemMat.opacity = op;
+        if (refs.cloverPetalMats) refs.cloverPetalMats.forEach(m => { m.opacity = op; });
       }
 
       if (refs.composer) refs.composer.render();
@@ -408,7 +427,10 @@ export default function HorizonHeroSection() {
       refs.mountains.forEach(m => { m.geometry.dispose(); m.material.dispose(); });
       if (refs.nebula)  { refs.nebula.geometry.dispose(); refs.nebula.material.dispose(); }
       if (refs.planet)  { refs.planet.children.forEach(c => { c.geometry?.dispose(); c.material?.dispose(); }); refs.scene?.remove(refs.planet); }
-      if (refs.clover)  { refs.clover.children.forEach(c => { c.geometry?.dispose(); c.material?.dispose(); }); refs.scene?.remove(refs.clover); }
+      if (refs.clover)  {
+        refs.clover.traverse(c => { if (c.isMesh) { c.geometry?.dispose(); c.material?.dispose(); } });
+        refs.scene?.remove(refs.clover);
+      }
       if (refs.renderer) refs.renderer.dispose();
     };
   }, []);
@@ -439,12 +461,14 @@ export default function HorizonHeroSection() {
 
       const { current: refs } = threeRefs;
 
-      // ── Camera path (4 waypoints for 3 sections) ──
+      // ── Camera path — orbital top-down approach ──
+      // Camera always looks at clover (0, 190, -2000). Starts far-above-behind,
+      // arcs over to directly above as progress increases.
       const cam = [
-        { x: 0, y: 30, z: 300   },  // section 0 start — HORIZON
-        { x: 0, y: 20, z: -300  },  // section 1 start — COSMOS
-        { x: 0, y: 10, z: -1000 },  // section 2 start — APPROACH
-        { x: 0, y: 10, z: -1850 },  // section 2 end   — CLOSE (near planet)
+        { x: 0, y: 800,  z: 100  },  // section 0 start — far above-back, planet tiny
+        { x: 0, y: 500,  z: -1400 }, // section 1 start — closer, still high
+        { x: 0, y: 350,  z: -1800 }, // section 2 start — arcing overhead
+        { x: 0, y: 280,  z: -1960 }, // section 2 end   — nearly directly above clover
       ];
       const cur  = cam[newSection]     ?? cam[cam.length - 1];
       const next = cam[newSection + 1] ?? cur;
