@@ -74,7 +74,9 @@ export default function HorizonHeroSection() {
       refs.composer.addPass(new RenderPass(refs.scene, refs.camera));
       refs.composer.addPass(new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight),
-        0.7, 0.6, 0.2
+        0.35, // strength — subtle enough not to blow out petal colours
+        0.5,  // radius
+        0.78  // threshold — only very bright pixels glow; Klee colours (lum 0.43-0.84) stay intact
       ));
 
       refs.scene.add(new THREE.AmbientLight(0x222244, 0.6));
@@ -481,23 +483,24 @@ export default function HorizonHeroSection() {
         m.position.z = progress > 0.45 ? 600000 : m.userData.baseZ;
       });
 
-      // ── Three.js Clover opacity: appears as HORIZON fades (0.15→0.25), hides before white (0.85→0.95) ──
+      // ── Three.js Clover: appear as HORIZON fades, hold until camera is nearly top-down ──
       refs.cloverOpacityFactor = progress < 0.15 ? 0
-        : progress < 0.25 ? linearMap(progress, 0.15, 0.25)   // fade in
-        : progress > 0.95 ? 0
-        : progress > 0.85 ? linearMap(0.95 - progress, 0, 0.10) // fade out
+        : progress < 0.25 ? linearMap(progress, 0.15, 0.25)    // fade in with HORIZON
+        : progress > 1.00 ? 0
+        : progress > 0.93 ? linearMap(1.00 - progress, 0, 0.07) // fade out just before white
         : 1;
 
-      // ── Halo expansion (0.65→0.95: scale 1→5.5, intensity 1→2.5) ──
-      const haloT = linearMap(progress, 0.65, 0.95);
+      // ── Halo expansion: builds up from 60%, dramatic peak at 93% ──
+      // Three.js yonca is still clearly visible all the way to ~93%
+      const haloT = linearMap(progress, 0.60, 0.93);
       refs.targetHaloScale     = 1 + haloT * 4.5;   // 1 → 5.5
       refs.targetHaloIntensity = 1 + haloT * 1.5;   // 1 → 2.5
 
-      // ── DOM: white overlay (0.85→0.95) ──
-      setWhiteOpacity(linearMap(progress, 0.85, 0.95));
+      // ── DOM white overlay: only when camera is nearly directly overhead (93%→100%) ──
+      setWhiteOpacity(linearMap(progress, 0.93, 1.00));
 
-      // ── DOM: final Klee clover (0.90→1.00) ──
-      setFinalCloverOpacity(linearMap(progress, 0.90, 1.00));
+      // ── DOM Klee clover: fades in in last 5% (screen is already white) ──
+      setFinalCloverOpacity(linearMap(progress, 0.96, 1.00));
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -513,7 +516,7 @@ export default function HorizonHeroSection() {
   // HORIZON title fades fast as scroll begins
   const titleOpacity = Math.max(0, 1 - scrollProgress * 5);
   // Scroll progress UI fades as white overlay appears
-  const scrollUIOpacity = Math.max(0, 1 - linearMap(scrollProgress, 0.82, 0.90));
+  const scrollUIOpacity = Math.max(0, 1 - linearMap(scrollProgress, 0.88, 0.95));
 
   return (
     <div ref={containerRef} className="cosmos-style hero-container">
