@@ -7,12 +7,26 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
-import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader';
-
 gsap.registerPlugin(ScrollTrigger);
 
+// Same path as KleeHeroAnimation.js — used for both 3D mesh and DOM SVG
 const PETAL_PATH =
   "M 0 0 l -2.9 -2.64 C -13.2 -11.98 -20 -18.14 -20 -25.7 C -20 -31.86 -15.16 -36.7 -9 -36.7 C -5.52 -36.7 -2.18 -35.08 0 -32.52 C 2.18 -35.08 5.52 -36.7 9 -36.7 C 15.16 -36.7 20 -31.86 20 -25.7 C 20 -18.14 13.2 -11.98 2.9 -2.64 L 0 0 z";
+
+// Build petal geometry directly from PETAL_PATH coordinates (no SVGLoader)
+function buildPetalGeo() {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0);
+  s.lineTo(-2.9, -2.64);
+  s.bezierCurveTo(-13.2, -11.98, -20, -18.14, -20, -25.7);
+  s.bezierCurveTo(-20, -31.86, -15.16, -36.7, -9, -36.7);
+  s.bezierCurveTo(-5.52, -36.7, -2.18, -35.08, 0, -32.52);
+  s.bezierCurveTo(2.18, -35.08, 5.52, -36.7, 9, -36.7);
+  s.bezierCurveTo(15.16, -36.7, 20, -31.86, 20, -25.7);
+  s.bezierCurveTo(20, -18.14, 13.2, -11.98, 2.9, -2.64);
+  s.lineTo(0, 0);
+  return new THREE.ShapeGeometry(s);
+}
 
 const PLANET_Z = -2000;
 
@@ -30,7 +44,12 @@ export default function HorizonHeroSection() {
   const scrollProgressRef = useRef(null);
   const menuRef           = useRef(null);
 
-  const smoothCameraPos = useRef({ x: 0, y: 30, z: 300 });
+  const smoothCameraPos   = useRef({ x: 0, y: 30, z: 300 });
+  // DOM clover sync refs
+  const finalCloverRef    = useRef(null);
+  const domSpinRef        = useRef(null);   // RAF handle
+  const domAngleRef       = useRef(0);      // current DOM rotation in degrees
+  const domSpinStarted    = useRef(false);
 
   const [scrollProgress,    setScrollProgress]    = useState(0);
   const [currentSection,    setCurrentSection]    = useState(0);
@@ -268,81 +287,47 @@ export default function HorizonHeroSection() {
       refs.halo   = haloMesh; // direct ref for scale + uniform updates
     };
 
-    /* ── Clover — grounded 3D flower on planet surface ──── */
+    /* ── Clover — grounded 3D flower on planet top ──────── */
     const createClover = () => {
       const { current: refs } = threeRefs;
 
-      // Positioned on TOP of planet sphere: planet center y=10, radius=180 → top y=190
-      const CLOVER_Y = 10 + 180;
       const group = new THREE.Group();
-      group.position.set(0, CLOVER_Y, PLANET_Z);
+      // Top of planet sphere: planet center y=10, radius=180 → top y=190
+      group.position.set(0, 10 + 180, PLANET_Z);
+      // Scale 1.5: calibrated so 3D size ≈ DOM clover size at transition camera (~93% scroll)
+      group.scale.set(1.5, 1.5, 1.5);
 
-      // Scale=2: ~80 units wide.
-      // At HORIZON fade (camera ~y=800, dist ~2200): ~2% screen = barely a bright dot
-      // At final approach (dist ~100): ~43° = cinematic fill
-      const S = 2;
-      group.scale.set(S, S, S);
-
-      const makeMat = (hex) => new THREE.MeshBasicMaterial({
-        color: new THREE.Color(hex),
-        transparent: true, opacity: 0,
+      const mkMat = (hex) => new THREE.MeshBasicMaterial({
+        color: new THREE.Color(hex), transparent: true, opacity: 0,
         side: THREE.DoubleSide, depthWrite: false, depthTest: false,
       });
-      const R = (m) => { m.renderOrder = 100; return m; };
+      const rOrder = (m) => { m.renderOrder = 100; return m; };
 
-      // ── Stem (dark green cylinder, vertical) ─────────────
-      const stemMat = makeMat('#2d6e35');
-      stemMat.opacity = 0; // controlled same as petals
-      const stemMesh = R(new THREE.Mesh(
-        new THREE.CylinderGeometry(1, 1.8, 30, 8),
-        stemMat
-      ));
-      stemMesh.position.y = -17; // base of petals is at y=0; center of stem 17 below
-      group.add(stemMesh);
+      // ── Stem ─────────────────────────────────────────────
+      const stemMat = mkMat('#2d6e35');
+      group.add(rOrder(Object.assign(
+        new THREE.Mesh(new THREE.CylinderGeometry(1, 1.8, 30, 8), stemMat),
+        { position: new THREE.Vector3(0, -17, 0) }
+      )));
 
-      // ── Petals (lying flat in XZ plane — visible from above) ─
-      let shapes = [];
-      try {
-        const svgData = new SVGLoader().parse(
-          `<svg xmlns="http://www.w3.org/2000/svg"><path d="${PETAL_PATH}"/></svg>`
-        );
-        if (svgData.paths?.length > 0) shapes = svgData.paths[0].toShapes(true);
-      } catch (e) { /* use fallback */ }
+      // ── Petals: lie flat in XZ plane, visible from above ─
+      // buildPetalGeo() gives exact Klee shape (meeting point at local origin)
+      const petalGeo = buildPetalGeo();
 
-      let petalGeo;
-      if (shapes.length > 0) {
-        petalGeo = new THREE.ShapeGeometry(shapes);
-        petalGeo.computeBoundingBox();
-        const bb = petalGeo.boundingBox;
-        petalGeo.translate(-((bb.min.x + bb.max.x) / 2), -((bb.min.y + bb.max.y) / 2), 0);
-        petalGeo.applyMatrix4(new THREE.Matrix4().makeScale(1, -1, 1));
-      } else {
-        // Simple teardrop petal fallback
-        const shape = new THREE.Shape();
-        shape.moveTo(0, 0); shape.bezierCurveTo(-10, -3, -18, -10, -18, -18);
-        shape.bezierCurveTo(-18, -28, -8, -34, 0, -28);
-        shape.bezierCurveTo(8, -34, 18, -28, 18, -18);
-        shape.bezierCurveTo(18, -10, 10, -3, 0, 0);
-        petalGeo = new THREE.ShapeGeometry(shape);
-        petalGeo.computeBoundingBox();
-        const bb = petalGeo.boundingBox;
-        petalGeo.translate(-((bb.min.x + bb.max.x) / 2), -((bb.min.y + bb.max.y) / 2), 0);
-      }
-
-      // petalsGroup rotated 90° so XY-plane petals now lie in XZ plane (flat, visible from above)
       const petalsGroup = new THREE.Group();
-      petalsGroup.rotation.x = -Math.PI / 2;
+      petalsGroup.rotation.x = -Math.PI / 2; // XY-plane → XZ-plane (faces up)
 
       PETAL_COLORS.forEach((hex, idx) => {
-        const mesh = R(new THREE.Mesh(petalGeo.clone(), makeMat(hex)));
-        mesh.rotation.z = PETAL_ANGLES[idx];
-        petalsGroup.add(mesh);
+        const m = rOrder(new THREE.Mesh(petalGeo.clone(), mkMat(hex)));
+        m.rotation.z = PETAL_ANGLES[idx];
+        petalsGroup.add(m);
       });
       group.add(petalsGroup);
 
+      refs.cloverYSpin = 0; // accumulated Y-rotation (synced to DOM on transition)
       refs.scene.add(group);
       refs.clover = group;
-      refs.cloverStemMat = stemMat;
+      refs.cloverStemMat  = stemMat;
       refs.cloverPetalMats = petalsGroup.children.map(m => m.material);
     };
 
@@ -398,9 +383,10 @@ export default function HorizonHeroSection() {
         m.position.y = (m.userData.baseZ ?? -100) + 50 + Math.cos(time * 0.15) * p;
       });
 
-      // Clover: grounded 3D flower — gentle Y rotation, opacity driven by scroll
+      // Clover: gentle Y-spin tracked in refs so DOM clover can sync at transition
       if (refs.clover) {
-        refs.clover.rotation.y += 0.003; // slow spin around stem axis
+        refs.cloverYSpin = (refs.cloverYSpin ?? 0) + 0.003;
+        refs.clover.rotation.y = refs.cloverYSpin;
         const op = refs.cloverOpacityFactor;
         if (refs.cloverStemMat) refs.cloverStemMat.opacity = op;
         if (refs.cloverPetalMats) refs.cloverPetalMats.forEach(m => { m.opacity = op; });
@@ -436,6 +422,31 @@ export default function HorizonHeroSection() {
       if (refs.renderer) refs.renderer.dispose();
     };
   }, []);
+
+  /* ── DOM clover spin — syncs to 3D angle on first appear ── */
+  useEffect(() => {
+    if (finalCloverOpacity > 0 && !domSpinStarted.current) {
+      domSpinStarted.current = true;
+      // Inherit exact angle from 3D clover so there's no jump
+      domAngleRef.current = ((threeRefs.current.cloverYSpin ?? 0) * 180) / Math.PI;
+
+      const tick = () => {
+        domAngleRef.current += 0.003 * (180 / Math.PI); // same rad/frame as 3D
+        if (finalCloverRef.current) {
+          finalCloverRef.current.style.transform =
+            `translate(-50%, -50%) rotate(${domAngleRef.current}deg)`;
+        }
+        domSpinRef.current = requestAnimationFrame(tick);
+      };
+      domSpinRef.current = requestAnimationFrame(tick);
+    }
+    return () => {
+      if (domSpinRef.current && finalCloverOpacity <= 0) {
+        cancelAnimationFrame(domSpinRef.current);
+        domSpinRef.current = null;
+      }
+    };
+  }, [finalCloverOpacity]);
 
   /* ── GSAP intro ─────────────────────────────────────────── */
   useEffect(() => {
@@ -556,7 +567,12 @@ export default function HorizonHeroSection() {
       <div className="cosmos-white-overlay" style={{ opacity: whiteOpacity }} />
 
       {/* ── DOM Klee clover: final scene on white background ── */}
-      <div className="cosmos-final-clover" style={{ opacity: finalCloverOpacity }}>
+      {/* ref + initial transform: JS RAF updates rotate() to match 3D spin angle */}
+      <div
+        ref={finalCloverRef}
+        className="cosmos-final-clover"
+        style={{ opacity: finalCloverOpacity, transform: 'translate(-50%, -50%)' }}
+      >
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <g transform="translate(50, 50)">
             <g fill="var(--ketchup-red)">
