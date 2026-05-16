@@ -158,36 +158,16 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Scroll sections (provide scroll distance + mid-scroll content) ── */
+/* ── Scroll sections — invisible spacers only, Three.js IS the content ── */
 .cosmos-style .cosmos-scroll-sections {
   position: relative;
   z-index: 1;
-  /* Spacer: pushes page height for scroll distance */
   margin-top: 100vh;
 }
 
 .cosmos-style .cosmos-content-section {
   height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   pointer-events: none;
-}
-
-.cosmos-style .cosmos-section-title {
-  font-size: clamp(2.5rem, 8vw, 7rem);
-  font-weight: 100;
-  letter-spacing: 0.22em;
-  margin: 0 0 1.5rem;
-  color: rgba(255, 255, 255, 0.15);
-}
-
-.cosmos-style .cosmos-section-subtitle {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  text-align: center;
 }
 
 /* ── Mobile adjustments ── */
