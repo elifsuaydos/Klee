@@ -7,7 +7,7 @@ import { RandomLetterSwapPingPong } from "./components/RandomLetterSwap";
 import GalleryModal from "./components/GalleryModal";
 import ImageGallery from "./components/ImageGallery";
 import FlowArt, { FlowSection } from "./components/StoryScroll";
-import { HoverPreviewProvider, HoverLink } from "./components/HoverPreview";
+import AboutCursorTrail from "./components/AboutCursorTrail";
 
 /* ================================================
    DATA
@@ -296,9 +296,9 @@ function MenuOverlay({ isOpen, onClose }) {
           </span>
         </a>
         <a
-          href="#about"
+          href="#storybridge"
           className="menu-overlay-link"
-          onClick={(e) => handleNavClick(e, "about")}
+          onClick={(e) => handleNavClick(e, "storybridge")}
         >
           <span className="menu-overlay-link-num">03</span>
           <span className="menu-overlay-link-label">
@@ -365,7 +365,10 @@ function ScrollProgress() {
     window.addEventListener("resize", onScroll);
     // React to hero-complete flag flips (handoff moment)
     const mo = new MutationObserver(onScroll);
-    mo.observe(document.body, { attributes: true, attributeFilter: ["data-hero-complete"] });
+    mo.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-hero-complete"],
+    });
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
@@ -387,164 +390,79 @@ function ScrollProgress() {
 // HeroSection is now handled by KleeHeroAnimation (GSAP scroll-triggered component)
 
 /* ================================================
-   ABOUT SECTION
-   ================================================ */
-function AboutSection() {
-  return (
-    <HoverPreviewProvider>
-      <section className="about" id="about">
-        <div className="container">
-          <div className="about-content">
-            <h2 className="about-title">Hakkımızda</h2>
-            <p className="about-lead">
-              Ankara merkezli, dünya geneline uzaktan hizmet veren bir web geliştirme ajansıyız.
-              Stratejik düşünce ve yaratıcı mühendislikle markalar için dijital ürünler
-              tasarlıyor, hayata geçiriyoruz.
-            </p>
-
-            <div className="about-paragraphs">
-              <p className="about-paragraph">
-                Her proje bir soruyla başlar: bu ürün insanların hayatına nasıl dokunacak?
-                Cevabı bulmak için{" "}
-                <HoverLink previewKey="strateji">derin bir keşif</HoverLink> sürecine giriyoruz —
-                sektörü, rakipleri ve kullanıcı beklentilerini analiz ediyoruz. Buradan çıkan
-                içgörüler, sonraki her kararın temelini oluşturuyor.
-              </p>
-
-              <p className="about-paragraph">
-                Keşif tamamlandığında sıra{" "}
-                <HoverLink previewKey="tasarim">UI/UX tasarıma</HoverLink> geliyor. Wireframe&apos;den
-                yüksek sadakatli prototipe kadar her adımda kullanıcıyı merkeze alıyoruz. Estetik
-                güzellik ve işlevsel sadelik bizi heyecanlandıran iki kutup — ve her tasarımda
-                ikisini birden arıyoruz.
-              </p>
-
-              <p className="about-paragraph">
-                Tasarım onaylandıktan sonra{" "}
-                <HoverLink previewKey="gelistirme">geliştirme</HoverLink> başlıyor. Next.js,
-                React ve modern web standartlarıyla hızlı, erişilebilir ve ölçeklenebilir
-                ürünler inşa ediyoruz. Kod kalitesi kadar{" "}
-                <HoverLink previewKey="animasyon">hareket tasarımı</HoverLink> da önceliğimiz —
-                iyi animasyon bir ürünü olağandan olağanüstüye taşır.
-              </p>
-
-              <p className="about-paragraph">
-                Son olarak <HoverLink previewKey="marka">marka kimliği</HoverLink> ve{" "}
-                <HoverLink previewKey="eticaret">dijital büyüme</HoverLink> stratejileriyle
-                ürünü piyasaya hazır hale getiriyoruz. Lansman sonrası da yanınızdayız;
-                veriye dayalı kararlarla ürününüzü sürekli iyileştiriyoruz.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </HoverPreviewProvider>
-  );
-}
-
-/* ================================================
    STORY BRIDGE SECTIONS
    ================================================ */
 
 function StoryBridgeAll() {
   return (
-    <FlowArt aria-label="Klee değerleri — TILSIM, VİZYON, TUTKU, KIVILCIM">
-      {/* Panel 1 — TILSIM / Kırmızı */}
-      <FlowSection
-        aria-label="TILSIM"
-        style={{ backgroundColor: "var(--ketchup-red)", color: "#fff" }}
-      >
-        <p className="story-panel-label">01 — TILSIM</p>
-        <hr className="story-panel-divider" />
-        <div>
-          <h2 className="story-panel-heading">
-            Büyülü
-            <br />
-            Detaylar
-            <br />
-            Fark Yaratır
-          </h2>
-        </div>
-        <hr className="story-panel-divider" />
-        <p className="story-panel-body">
-          Sıradan olanı olağanüstüye dönüştüren şey detaylardır. Her piksel,
-          her geçiş, her etkileşim — hepsinde anlam ve özen arıyoruz.
-          Yaptığımız işin büyüsü bu dikkatten doğuyor.
-        </p>
-      </FlowSection>
+    <section id="storybridge">
+      <FlowArt aria-label="Klee değerleri — TILSIM, VİZYON, Hakkımızda">
+        {/* Panel 1 — HAKKIMIZDA1 / Yeşil */}
+        <FlowSection
+          aria-label="HAKKIMIZDA1"
+          style={{ backgroundColor: "var(--olive-green)", color: "#fff" }}
+        >
+          <p className="story-panel-label">01 — HAKKIMIZDA</p>
+          <hr className="story-panel-divider" />
+          <div>
+            <h2 className="story-panel-heading">
+              Öğrenciler
+              <br />
+              Tarafından
+              <br />
+              Kurulan
+            </h2>
+          </div>
+          <hr className="story-panel-divider" />
+          <p className="story-panel-body">
+            Sıradan olanı olağanüstüye dönüştüren şey detaylardır. Her piksel,
+            her geçiş, her etkileşim — hepsinde anlam ve özen arıyoruz.
+            Yaptığımız işin büyüsü bu dikkatten doğuyor.
+          </p>
+        </FlowSection>
 
-      {/* Panel 2 — VİZYON / Yeşil */}
-      <FlowSection
-        aria-label="VİZYON"
-        style={{ backgroundColor: "#2d3a1e", color: "#e8eedc" }}
-      >
-        <p className="story-panel-label">02 — VİZYON</p>
-        <hr className="story-panel-divider" />
-        <div>
-          <h2 className="story-panel-heading">
-            Bugünü
-            <br />
-            Aşan
-            <br />
-            Düşünce
-          </h2>
-        </div>
-        <hr className="story-panel-divider" />
-        <p className="story-panel-body-right">
-          Bir ürünü sadece bugün için değil, beş yıl sonra için tasarlıyoruz.
-          Teknolojiyi takip ediyor, trendlerin ötesine geçiyor ve
-          müşterilerimizin rakiplerinin önünde kalmasını sağlıyoruz.
-        </p>
-      </FlowSection>
+        {/* Panel 2 — HAKKIMIZDA2 / Mavi */}
+        <FlowSection
+          aria-label="HAKKIMIZDA2"
+          style={{ backgroundColor: "var(--sky-blue)", color: "#fff" }}
+        >
+          <p className="story-panel-label">02 — HAKKIMIZDA</p>
+          <hr className="story-panel-divider" />
+          <div>
+            <h2 className="story-panel-heading">
+              Hayallerimiz
+              <br />
+              Sayesinde
+              <br />
+              Şekillenen
+            </h2>
+          </div>
+          <hr className="story-panel-divider" />
+        </FlowSection>
 
-      {/* Panel 3 — TUTKU / Mavi */}
-      <FlowSection
-        aria-label="TUTKU"
-        style={{ backgroundColor: "var(--sky-blue)", color: "#0a1628" }}
-      >
-        <p className="story-panel-label">03 — TUTKU</p>
-        <hr className="story-panel-divider" />
-        <div>
-          <h2 className="story-panel-heading">
-            İşimizi
-            <br />
-            Seviyoruz
-            <br />
-            Ve Belli
-          </h2>
-        </div>
-        <hr className="story-panel-divider" />
-        <p className="story-panel-body">
-          Tutkusu olmayan kod çalışır, tutkusu olan kod ilham verir.
-          Her projede o farkı hissettirmek için saatlerce araştırıyor,
-          prototip yapıyor ve ince ayar çekiyoruz. Ortalamayla yetinmiyoruz.
-        </p>
-      </FlowSection>
+        {/* Panel 3 — HAKKIMIZDA / Kırmızı */}
+        <FlowSection
+          aria-label="HAKKIMIZDA"
+          style={{ backgroundColor: "var(--ketchup-red)", color: "#ffffff" }}
+        >
+          <p className="story-panel-label">03 — HAKKIMIZDA</p>
+          <hr className="story-panel-divider" />
+          <div>
+            <h2 className="story-panel-heading">
+              Ankara
+              <br />
+              Merkezli Bir 
+              <br />
+              Oluşumuz
+            </h2>
+          </div>
+          <hr className="story-panel-divider" />
+        </FlowSection>
+      </FlowArt>
 
-      {/* Panel 4 — KIVILCIM / Sarı */}
-      <FlowSection
-        aria-label="KIVILCIM"
-        style={{ backgroundColor: "var(--sunshine-yellow)", color: "#1a1208" }}
-      >
-        <p className="story-panel-label">04 — KIVILCIM</p>
-        <hr className="story-panel-divider" />
-        <div>
-          <h2 className="story-panel-heading">
-            Fikiriniz
-            <br />
-            Ateşi
-            <br />
-            Biz Körükleriz
-          </h2>
-        </div>
-        <hr className="story-panel-divider" />
-        <p className="story-panel-body-right">
-          En iyi dijital ürünler bir kıvılcımla başlar — sizin vizyonunuzla.
-          Biz o kıvılcımı alır, üzerine strateji, tasarım ve kod inşa ederiz.
-          Birlikte yarattığımız şey her zaman beklentileri aşar.
-        </p>
-      </FlowSection>
-    </FlowArt>
+      {/* Cursor trail for hover words inside the Hakkımızda card */}
+      <AboutCursorTrail targetClass="about-hover-word" />
+    </section>
   );
 }
 
@@ -560,7 +478,8 @@ function ProjectsSection() {
     setGalleryOpen(true);
   }, []);
 
-  const activeProject = PROJECTS_GALLERY[galleryProjectIndex] ?? PROJECTS_GALLERY[0];
+  const activeProject =
+    PROJECTS_GALLERY[galleryProjectIndex] ?? PROJECTS_GALLERY[0];
 
   return (
     <section className="projects" id="projects">
@@ -597,10 +516,7 @@ function ProjectsSection() {
 
       {/* Gallery breaks out of container to span full section width */}
       <div className="projects-gallery-full">
-        <ImageGallery
-          items={PROJECTS_GALLERY}
-          onItemClick={handleItemClick}
-        />
+        <ImageGallery items={PROJECTS_GALLERY} onItemClick={handleItemClick} />
       </div>
 
       <GalleryModal
@@ -652,7 +568,7 @@ function ContactSection() {
                 </div>
                 <div>
                   <div className="contact-info-label">Telefon</div>
-                  <div className="contact-info-value">+90 00000000</div>
+                  <div className="contact-info-value">+90 544 370 65 33</div>
                 </div>
               </div>
 
@@ -708,7 +624,7 @@ function Footer() {
           <a href="mailto:hello@klee.io" className="footer-link">
             Gmail
           </a>
-          <a href="tel:+90" className="footer-link">
+          <a href="tel:05443706533" className="footer-link">
             Phone
           </a>
         </div>
@@ -792,7 +708,6 @@ export default function Home() {
         <KleeHeroAnimation />
         <ProjectsSection />
         <StoryBridgeAll />
-        <AboutSection />
         <ContactSection />
       </main>
       <Footer />

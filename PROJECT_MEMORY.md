@@ -99,7 +99,7 @@ Klee-main/
 - **Intro screen** ([KleeHeroAnimation.js:673](app/components/KleeHeroAnimation.js#L673)): "Klee ile HAYALİNDEKİ WEBSİTENE kavuş" başlığı; scroll prompt kaldırıldı. Scroll başlayınca fade-out (0.4s).
 - **İç bileşenler:**
   - `SplitTextChars` — string'i `<span class="char">` dizisine böler, her karakter ayrı animasyon hedefi olur.
-  - `CyclingWord` — final başlıkta "Dijital **deneyimler/websiteleri/hayalleri/projeleri** tasarlıyoruz." kelimesini her **2.4 saniyede** bir slide+blur ile değiştirir. Tüm kelimeler DOM'da, GSAP ile y/opacity/filter/scale animasyonu.
+  - `CyclingWord` — final başlıkta "Dijital **deneyimler, websiteler, hayaller, projeler** tasarlıyoruz." kelimesini her **2.4 saniyede** bir slide+blur ile değiştirir. Tüm kelimeler DOM'da, GSAP ile y/opacity/filter/scale animasyonu.
 
 ### 3. `Card3D` ([app/components/Card3D.js](app/components/Card3D.js))
 

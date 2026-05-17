@@ -4,8 +4,6 @@ import { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { CardContainer, CardBody, CardItem } from "./Card3D";
-
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 function SplitTextChars({ text }) {
@@ -36,7 +34,7 @@ const PETAL_PATH =
    Cycling word — all words always in DOM, GSAP coordinates
    entrance (slide + blur in) and exit (slide + blur out)
 ────────────────────────────────────────────────────── */
-const CYCLE_WORDS = ["deneyimler", "websiteleri", "hayalleri", "projeleri"];
+const CYCLE_WORDS = ["deneyimler", "websiteler", "hayaller", "projeler"];
 
 function CyclingWord() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -430,12 +428,12 @@ export default function KleeHeroAnimation() {
       );
       master.to({}, { duration: 1.5 }, "step1-hold");
       master.to(
-        [yp, bp, gp],
+        [rp, yp, gp],
         { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
         "step1-hold",
       );
       master.to(
-        [yp, bp, gp],
+        [rp, yp, gp],
         { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
         "step1-hold+=1.0",
       );
@@ -523,12 +521,12 @@ export default function KleeHeroAnimation() {
       );
       master.to({}, { duration: 1.5 }, "step2-hold");
       master.to(
-        [rp, yp, bp],
+        [yp, bp, gp],
         { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
         "step2-hold",
       );
       master.to(
-        [rp, yp, bp],
+        [yp, bp, gp],
         { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
         "step2-hold+=1.0",
       );
@@ -616,12 +614,12 @@ export default function KleeHeroAnimation() {
       );
       master.to({}, { duration: 1.5 }, "step3-hold");
       master.to(
-        [rp, yp, gp],
+        [rp, yp, bp],
         { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
         "step3-hold",
       );
       master.to(
-        [rp, yp, gp],
+        [rp, yp, bp],
         { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
         "step3-hold+=1.0",
       );
@@ -791,8 +789,8 @@ export default function KleeHeroAnimation() {
       }
       master.fromTo(
         finalContentRef.current,
-        { opacity: 0, y: 40 },
-        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        { opacity: 0, scale: 0.96 },
+        { opacity: 1, scale: 1, duration: 1.1, ease: "expo.out" },
         "converge+=1.8",
       );
 
@@ -901,35 +899,9 @@ export default function KleeHeroAnimation() {
           overflow: "hidden",
         }}
       >
-        {/* Step 1: TILSIM — keyword top-left, desc bottom-right */}
+        {/* Step 1: TUTKU — keyword top-left, desc bottom-right */}
         <div ref={step1Ref} style={{ position: "absolute", inset: 0 }}>
           <h2 className="hero-keyword" style={{ top: "10vh", left: "5vw" }}>
-            <SplitTextChars text="TILSIM" />
-          </h2>
-          <div
-            className="step-desc step-desc--right"
-            style={{ opacity: 0, transform: "translateY(20px)" }}
-          >
-            Klee ile çalışanların yakalayacağı o eşsiz dijital başarı şansı.
-          </div>
-        </div>
-
-        {/* Step 2: VİZYON — keyword bottom-right, desc bottom-left */}
-        <div ref={step2Ref} style={{ position: "absolute", inset: 0 }}>
-          <h2 className="hero-keyword" style={{ bottom: "10vh", right: "5vw" }}>
-            <SplitTextChars text="VİZYON" />
-          </h2>
-          <div
-            className="step-desc step-desc--left"
-            style={{ opacity: 0, transform: "translateY(20px)" }}
-          >
-            Müşterinin hayali ve Klee&apos;nin tasarım gücü.
-          </div>
-        </div>
-
-        {/* Step 3: TUTKU — keyword bottom-left, desc bottom-right */}
-        <div ref={step3Ref} style={{ position: "absolute", inset: 0 }}>
-          <h2 className="hero-keyword" style={{ bottom: "10vh", left: "5vw" }}>
             <SplitTextChars text="TUTKU" />
           </h2>
           <div
@@ -937,6 +909,32 @@ export default function KleeHeroAnimation() {
             style={{ opacity: 0, transform: "translateY(20px)" }}
           >
             Kodlamaya ve detaylara verilen önem.
+          </div>
+        </div>
+
+        {/* Step 2: TILSIM — keyword bottom-right, desc bottom-left */}
+        <div ref={step2Ref} style={{ position: "absolute", inset: 0 }}>
+          <h2 className="hero-keyword" style={{ bottom: "10vh", right: "5vw" }}>
+            <SplitTextChars text="TILSIM" />
+          </h2>
+          <div
+            className="step-desc step-desc--left"
+            style={{ opacity: 0, transform: "translateY(20px)" }}
+          >
+            Sıradan olanı olağanüstüye dönüştüren şey detaylardır.
+          </div>
+        </div>
+
+        {/* Step 3: VİZYON — keyword bottom-left, desc bottom-right */}
+        <div ref={step3Ref} style={{ position: "absolute", inset: 0 }}>
+          <h2 className="hero-keyword" style={{ bottom: "10vh", left: "5vw" }}>
+            <SplitTextChars text="VİZYON" />
+          </h2>
+          <div
+            className="step-desc step-desc--right"
+            style={{ opacity: 0, transform: "translateY(20px)" }}
+          >
+            Müşterinin hayali ve Klee&apos;nin tasarım gücü.
           </div>
         </div>
 
@@ -954,57 +952,13 @@ export default function KleeHeroAnimation() {
         </div>
       </div>
 
-      {/* ── Final content (appears when clover flies to navbar) ─────── */}
+      {/* ── Final content: overlay + text (no background image) ───────── */}
       <div
         ref={finalContentRef}
         className="hero-final-content"
         style={{ opacity: 0 }}
       >
-        {/* 3D tilt card wrapping the project image */}
-        <CardContainer
-          containerStyle={{ flex: 1 }}
-          style={{ width: "100%", height: "100%" }}
-        >
-          <CardBody style={{ width: "100%", height: "100%" }}>
-            <CardItem
-              translateZ={60}
-              style={{
-                width: "100%",
-                height: "60vh",
-                borderRadius: "24px",
-                overflow: "hidden",
-                boxShadow:
-                  "0 30px 80px rgba(0,0,0,0.18), 0 10px 30px rgba(0,0,0,0.10)",
-                display: "block",
-              }}
-            >
-              <img
-                src="/project-1.png"
-                alt="Klee Team"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-              />
-            </CardItem>
-
-            {/* Floating glare layer */}
-            <CardItem
-              translateZ={80}
-              style={{
-                position: "absolute",
-                inset: 0,
-                borderRadius: "24px",
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent 60%)",
-                pointerEvents: "none",
-              }}
-            />
-          </CardBody>
-        </CardContainer>
-        <div className="hero-final-text">
+        <div className="hero-final-overlay">
           <h1 className="hero-final-heading">
             Dijital <br />
             <CyclingWord /> <br />
