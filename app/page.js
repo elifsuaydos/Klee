@@ -6,6 +6,8 @@ import KleeHeroAnimation from "./components/KleeHeroAnimation";
 import { RandomLetterSwapPingPong } from "./components/RandomLetterSwap";
 import GalleryModal from "./components/GalleryModal";
 import ImageGallery from "./components/ImageGallery";
+import FlowArt, { FlowSection } from "./components/StoryScroll";
+import { HoverPreviewProvider, HoverLink } from "./components/HoverPreview";
 
 /* ================================================
    DATA
@@ -389,38 +391,160 @@ function ScrollProgress() {
    ================================================ */
 function AboutSection() {
   return (
-    <section className="about" id="about">
-      <svg
-        className="about-clover-bg"
-        viewBox="0 0 200 140"
-        xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="none"
-        width="100%"
-        height="100%"
-        aria-hidden="true"
-      >
-        <path
-          d="M 30 0 L 170 0 Q 200 0 200 30 L 200 110 Q 200 140 170 140 L 30 140 Q 0 140 0 110 L 0 30 Q 0 0 30 0 Z
-             M 0 70 Q 30 50 30 0 L 0 0 Z
-             M 200 70 Q 170 50 170 0 L 200 0 Z
-             M 0 70 Q 30 90 30 140 L 0 140 Z
-             M 200 70 Q 170 90 170 140 L 200 140 Z"
-          fill="#000000"
-          fillRule="evenodd"
-        />
-      </svg>
+    <HoverPreviewProvider>
+      <section className="about" id="about">
+        <div className="container">
+          <div className="about-content">
+            <h2 className="about-title">Hakkımızda</h2>
+            <p className="about-lead">
+              Ankara merkezli, dünya geneline uzaktan hizmet veren bir web geliştirme ajansıyız.
+              Stratejik düşünce ve yaratıcı mühendislikle markalar için dijital ürünler
+              tasarlıyor, hayata geçiriyoruz.
+            </p>
 
-      <div className="container">
-        <div className="about-content">
-          <h2 className="about-title">Hakkımızda</h2>
-          <p className="about-description">
-            Ankara merkezli, dünya geneline uzaktan hizmet veren bir web
-            geliştirme ajansıyız. Stratejik düşünce ve yaratıcı mühendislikle
-            markalar için dijital ürünler tasarlıyor, hayata geçiriyoruz.
-          </p>
+            <div className="about-paragraphs">
+              <p className="about-paragraph">
+                Her proje bir soruyla başlar: bu ürün insanların hayatına nasıl dokunacak?
+                Cevabı bulmak için{" "}
+                <HoverLink previewKey="strateji">derin bir keşif</HoverLink> sürecine giriyoruz —
+                sektörü, rakipleri ve kullanıcı beklentilerini analiz ediyoruz. Buradan çıkan
+                içgörüler, sonraki her kararın temelini oluşturuyor.
+              </p>
+
+              <p className="about-paragraph">
+                Keşif tamamlandığında sıra{" "}
+                <HoverLink previewKey="tasarim">UI/UX tasarıma</HoverLink> geliyor. Wireframe&apos;den
+                yüksek sadakatli prototipe kadar her adımda kullanıcıyı merkeze alıyoruz. Estetik
+                güzellik ve işlevsel sadelik bizi heyecanlandıran iki kutup — ve her tasarımda
+                ikisini birden arıyoruz.
+              </p>
+
+              <p className="about-paragraph">
+                Tasarım onaylandıktan sonra{" "}
+                <HoverLink previewKey="gelistirme">geliştirme</HoverLink> başlıyor. Next.js,
+                React ve modern web standartlarıyla hızlı, erişilebilir ve ölçeklenebilir
+                ürünler inşa ediyoruz. Kod kalitesi kadar{" "}
+                <HoverLink previewKey="animasyon">hareket tasarımı</HoverLink> da önceliğimiz —
+                iyi animasyon bir ürünü olağandan olağanüstüye taşır.
+              </p>
+
+              <p className="about-paragraph">
+                Son olarak <HoverLink previewKey="marka">marka kimliği</HoverLink> ve{" "}
+                <HoverLink previewKey="eticaret">dijital büyüme</HoverLink> stratejileriyle
+                ürünü piyasaya hazır hale getiriyoruz. Lansman sonrası da yanınızdayız;
+                veriye dayalı kararlarla ürününüzü sürekli iyileştiriyoruz.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </HoverPreviewProvider>
+  );
+}
+
+/* ================================================
+   STORY BRIDGE SECTIONS
+   ================================================ */
+
+function StoryBridgeAll() {
+  return (
+    <FlowArt aria-label="Klee değerleri — TILSIM, VİZYON, TUTKU, KIVILCIM">
+      {/* Panel 1 — TILSIM / Kırmızı */}
+      <FlowSection
+        aria-label="TILSIM"
+        style={{ backgroundColor: "var(--ketchup-red)", color: "#fff" }}
+      >
+        <p className="story-panel-label">01 — TILSIM</p>
+        <hr className="story-panel-divider" />
+        <div>
+          <h2 className="story-panel-heading">
+            Büyülü
+            <br />
+            Detaylar
+            <br />
+            Fark Yaratır
+          </h2>
+        </div>
+        <hr className="story-panel-divider" />
+        <p className="story-panel-body">
+          Sıradan olanı olağanüstüye dönüştüren şey detaylardır. Her piksel,
+          her geçiş, her etkileşim — hepsinde anlam ve özen arıyoruz.
+          Yaptığımız işin büyüsü bu dikkatten doğuyor.
+        </p>
+      </FlowSection>
+
+      {/* Panel 2 — VİZYON / Yeşil */}
+      <FlowSection
+        aria-label="VİZYON"
+        style={{ backgroundColor: "#2d3a1e", color: "#e8eedc" }}
+      >
+        <p className="story-panel-label">02 — VİZYON</p>
+        <hr className="story-panel-divider" />
+        <div>
+          <h2 className="story-panel-heading">
+            Bugünü
+            <br />
+            Aşan
+            <br />
+            Düşünce
+          </h2>
+        </div>
+        <hr className="story-panel-divider" />
+        <p className="story-panel-body-right">
+          Bir ürünü sadece bugün için değil, beş yıl sonra için tasarlıyoruz.
+          Teknolojiyi takip ediyor, trendlerin ötesine geçiyor ve
+          müşterilerimizin rakiplerinin önünde kalmasını sağlıyoruz.
+        </p>
+      </FlowSection>
+
+      {/* Panel 3 — TUTKU / Mavi */}
+      <FlowSection
+        aria-label="TUTKU"
+        style={{ backgroundColor: "var(--sky-blue)", color: "#0a1628" }}
+      >
+        <p className="story-panel-label">03 — TUTKU</p>
+        <hr className="story-panel-divider" />
+        <div>
+          <h2 className="story-panel-heading">
+            İşimizi
+            <br />
+            Seviyoruz
+            <br />
+            Ve Belli
+          </h2>
+        </div>
+        <hr className="story-panel-divider" />
+        <p className="story-panel-body">
+          Tutkusu olmayan kod çalışır, tutkusu olan kod ilham verir.
+          Her projede o farkı hissettirmek için saatlerce araştırıyor,
+          prototip yapıyor ve ince ayar çekiyoruz. Ortalamayla yetinmiyoruz.
+        </p>
+      </FlowSection>
+
+      {/* Panel 4 — KIVILCIM / Sarı */}
+      <FlowSection
+        aria-label="KIVILCIM"
+        style={{ backgroundColor: "var(--sunshine-yellow)", color: "#1a1208" }}
+      >
+        <p className="story-panel-label">04 — KIVILCIM</p>
+        <hr className="story-panel-divider" />
+        <div>
+          <h2 className="story-panel-heading">
+            Fikiriniz
+            <br />
+            Ateşi
+            <br />
+            Biz Körükleriz
+          </h2>
+        </div>
+        <hr className="story-panel-divider" />
+        <p className="story-panel-body-right">
+          En iyi dijital ürünler bir kıvılcımla başlar — sizin vizyonunuzla.
+          Biz o kıvılcımı alır, üzerine strateji, tasarım ve kod inşa ederiz.
+          Birlikte yarattığımız şey her zaman beklentileri aşar.
+        </p>
+      </FlowSection>
+    </FlowArt>
   );
 }
 
@@ -667,6 +791,7 @@ export default function Home() {
       <main>
         <KleeHeroAnimation />
         <ProjectsSection />
+        <StoryBridgeAll />
         <AboutSection />
         <ContactSection />
       </main>

@@ -100,11 +100,15 @@ export default function GalleryModal({
   };
 
   return (
-    <div className="gallery-immersive-overlay" role="dialog" aria-modal="true">
+    <div
+      className="gallery-immersive-overlay"
+      role="dialog"
+      aria-modal="true"
+    >
       {/* Top-left: Back button */}
       <button
         className="gallery-back-btn"
-        onClick={onClose}
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
         aria-label="Geri dön"
       >
         <svg
@@ -123,7 +127,7 @@ export default function GalleryModal({
       {/* Top-right: Project info button */}
       <button
         className={`gallery-info-btn ${infoPanelOpen ? "active" : ""}`}
-        onClick={() => setInfoPanelOpen((v) => !v)}
+        onClick={(e) => { e.stopPropagation(); setInfoPanelOpen((v) => !v); }}
         aria-label="Proje bilgisi"
         aria-expanded={infoPanelOpen}
       >
@@ -145,12 +149,12 @@ export default function GalleryModal({
       {/* Full-screen image/video display */}
       <div className="gallery-immersive-scroll" ref={scrollContainerRef}>
         {images.map((src, idx) => (
-          <div key={idx} className="gallery-immersive-slide">
+          <div key={idx} className="gallery-immersive-slide" onClick={onClose}>
             <Image
               src={src}
               alt={`${projectInfo.title} — görsel ${idx + 1}`}
               fill
-              style={{ objectFit: "contain", objectPosition: "center" }}
+              style={{ objectFit: "contain", objectPosition: "center", pointerEvents: "none" }}
               sizes="100vw"
               priority={idx === currentIndex}
             />
@@ -159,7 +163,7 @@ export default function GalleryModal({
       </div>
 
       {/* Bottom: Thumbnail strip */}
-      <div className="gallery-thumbnail-strip">
+      <div className="gallery-thumbnail-strip" onClick={(e) => e.stopPropagation()}>
         {images.map((src, idx) => (
           <button
             key={idx}
@@ -182,6 +186,7 @@ export default function GalleryModal({
       <aside
         className={`gallery-info-panel ${infoPanelOpen ? "open" : ""}`}
         aria-label="Proje bilgisi paneli"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Close button overlapping gallery */}
         <button

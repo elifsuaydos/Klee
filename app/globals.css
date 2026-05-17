@@ -735,7 +735,50 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
 }
 
 .klee-gallery-item:hover .klee-gallery-item-img {
-  transform: scale(1.02);
+  transform: scale(1.04);
+}
+
+.klee-gallery-item-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.4rem 1.2rem 1.2rem;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.28) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.klee-gallery-item:hover .klee-gallery-item-overlay {
+  opacity: 1;
+}
+
+.klee-gallery-item-tag {
+  font-family: var(--font-family);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+.klee-gallery-item-title {
+  font-family: var(--font-heading);
+  font-size: clamp(0.9rem, 1.4vw, 1.25rem);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0;
 }
 
 .klee-gallery-item:focus-visible {
@@ -1566,5 +1609,247 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
 
   .project-card-content {
     padding: 18px 20px;
+  }
+}
+
+/* ========================================
+   STORY SCROLL (FlowArt / FlowSection)
+   ======================================== */
+
+.klee-flow-art {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.klee-flow-section {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.klee-flow-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100vh;
+  padding: clamp(2rem, 6vw, 5rem) 6vw clamp(2rem, 5vw, 4rem);
+  gap: 0;
+  will-change: transform;
+}
+
+.story-panel-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-family: var(--font-family);
+  opacity: 0.7;
+}
+
+.story-panel-heading {
+  font-family: var(--font-heading);
+  font-size: clamp(3.5rem, 11vw, 13rem);
+  font-weight: 800;
+  line-height: 0.88;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.story-panel-divider {
+  border: none;
+  border-top: 1px solid currentColor;
+  margin: clamp(1rem, 2.5vw, 2.5rem) 0;
+  opacity: 0.35;
+}
+
+.story-panel-body {
+  max-width: 52ch;
+  font-size: clamp(1rem, 2vw, 1.7rem);
+  font-weight: 400;
+  line-height: 1.55;
+  font-family: var(--font-family);
+  margin-top: auto;
+}
+
+.story-panel-body-right {
+  max-width: 52ch;
+  font-size: clamp(1rem, 2vw, 1.7rem);
+  font-weight: 400;
+  line-height: 1.55;
+  font-family: var(--font-family);
+  margin-top: auto;
+  margin-left: auto;
+  text-align: right;
+}
+
+@media (max-width: 767px) {
+  .story-panel-heading {
+    font-size: clamp(2.8rem, 16vw, 6rem);
+    line-height: 0.9;
+  }
+
+  .story-panel-body,
+  .story-panel-body-right {
+    font-size: clamp(0.95rem, 4vw, 1.2rem);
+    text-align: left;
+    margin-left: 0;
+  }
+}
+
+/* ========================================
+   HOVER PREVIEW
+   ======================================== */
+
+.klee-hover-link {
+  font-weight: 600;
+  font-family: var(--font-heading);
+  cursor: default;
+  position: relative;
+  display: inline;
+  color: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.klee-hover-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--ketchup-red),
+    var(--sunshine-yellow),
+    var(--sky-blue),
+    var(--olive-green)
+  );
+  transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.klee-hover-link:hover::after {
+  width: 100%;
+}
+
+.klee-preview-card {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9000;
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, opacity;
+}
+
+.klee-preview-card.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.klee-preview-card-inner {
+  background: #111;
+  border-radius: 14px;
+  padding: 7px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.75),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.klee-preview-card-inner img {
+  width: 280px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 9px;
+  display: block;
+}
+
+.klee-preview-card-title {
+  padding: 11px 7px 4px;
+  font-size: 0.82rem;
+  color: #fff;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+.klee-preview-card-subtitle {
+  padding: 0 7px 9px;
+  font-size: 0.72rem;
+  color: #777;
+  font-family: var(--font-family);
+}
+
+@media (max-width: 767px) {
+  .klee-preview-card-inner img {
+    width: 220px;
+    height: 140px;
+  }
+}
+
+/* ========================================
+   ABOUT SECTION — ENRICHED
+   ======================================== */
+
+.about {
+  position: relative;
+  padding: var(--section-padding);
+  background: #fafaf8;
+  overflow: hidden;
+}
+
+.about-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.about-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.2rem, 6vw, 5rem);
+  font-weight: 800;
+  color: var(--gray-900);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: 4rem;
+}
+
+.about-lead {
+  font-size: clamp(1.25rem, 2.2vw, 1.7rem);
+  line-height: 1.55;
+  color: var(--gray-700);
+  max-width: 56ch;
+  margin: 0 auto 2rem;
+  font-family: var(--font-family);
+}
+
+.about-paragraphs {
+  margin-top: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.about-paragraph {
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  line-height: 1.75;
+  color: var(--gray-600);
+  font-family: var(--font-family);
+}
+
+@media (max-width: 767px) {
+  .about-paragraphs {
+    padding: 0 1rem;
+  }
+
+  .about-lead {
+    text-align: left;
+    padding: 0 1rem;
   }
 }

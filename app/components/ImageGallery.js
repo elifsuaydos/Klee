@@ -30,6 +30,10 @@ export default function ImageGallery({ items, onItemClick }) {
               priority={idx < 2}
             />
           </div>
+          <div className="klee-gallery-item-overlay" aria-hidden="true">
+            <span className="klee-gallery-item-tag">{item.tag}</span>
+            <p className="klee-gallery-item-title">{item.title}</p>
+          </div>
         </div>
       ))}
     </div>

@@ -67,7 +67,9 @@ Klee-main/
 │       ├── Card3D.js             → 3D mouse-tilt kartı (CardContainer / CardBody / CardItem). Hero final görselinde kullanılıyor. Aceternity-UI'dan port; perspective: 1000px, transition fast (80ms) tracking + slow spring (700ms cubic-bezier) return.
 │       ├── RandomLetterSwap.js   → Hover'da harf-harf rastgele sırayla yukarı/aşağı kayan text efekti. İki export: PingPong (geri döner) ve Forward (tek seferlik). GSAP ile harf bazlı staggered animasyon.
 │       ├── ScrambleText.js       → Matrix benzeri karakter scramble efekti. IntersectionObserver ile otomatik veya hoverOnly. ⚠️ ŞU AN page.js'te import edilmiyor (RandomLetterSwap'a geçildi). Silinmeden önce kontrol et.
-│       └── GalleryModal.js       → Tam ekran yatay snap-scroll proje galerisi (← → ve kapat butonları). next/image fill + objectFit:contain.
+│       ├── GalleryModal.js       → Tam ekran yatay snap-scroll proje galerisi (← → ve kapat butonları). next/image fill + objectFit:contain.
+│       ├── StoryScroll.js        → FlowArt (default) + FlowSection (named). GSAP ScrollTrigger pinned scroll — alttaki panel 30° açıyla dönerek öncekinin üstüne kayar. `prefers-reduced-motion` desteği. Tailwind'siz, saf CSS class'larıyla (`.klee-flow-art`, `.klee-flow-section`, `.klee-flow-inner`).
+│       └── HoverPreview.js       → HoverPreviewProvider (context) + HoverLink + PreviewCard. Anahtar kelimelerin üstüne gelince `position:fixed` pop-up görsel kart. `PREVIEW_DATA` sabiti 6 konu içeriyor (tasarim/gelistirme/strateji/marka/animasyon/eticaret). Görsel placeholder olarak /project-*.png.
 ├── public/
 │   ├── klee-logo.svg
 │   ├── project-1.png … project-5.png
@@ -188,7 +190,7 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 ## 🔄 Veri Akışı & Etkileşim Modeli
 
 1. **Sayfa açılışı:** [layout.js](app/layout.js) → `<html lang="tr">` → `<body>` → [page.js](app/page.js) `Home`.
-2. `Home` üstte `TopBar`, `MenuOverlay`, `ScrollProgress` render eder; `<main>` içinde `<KleeHeroAnimation />`, `<ProjectsSection />`, `<ContactSection />`, en altta `<Footer />` bulunur.
+2. `Home` üstte `TopBar`, `MenuOverlay`, `ScrollProgress` render eder; `<main>` içinde şu sırayla: `<KleeHeroAnimation />` → `<ProjectsSection />` → `<StoryBridgeOne />` (TILSIM+VİZYON) → `<AboutSection />` → `<StoryBridgeTwo />` (TUTKU+KIVILCIM) → `<ContactSection />`, en altta `<Footer />`.
 3. `Home` içinde **global IntersectionObserver** kurulur; `.fade-in-up` class'lı tüm elementlere intersection anında `.visible` ekler ([page.js:529](app/page.js#L529)).
 4. **Hero:** Yukarıdaki zaman çizelgesi.
 5. **Projects:** `PROJECTS_GALLERY` ile `<ImageGallery>` hover-expand galerisi. Hover'da kart `flex-grow:4` ile genişler — tüm kartlar her durumda aynı davranır (aktif gösterge yok). Foto `object-fit: contain` ile kırpılmadan görünür. Tıklayınca `<GalleryModal>` o projenin 5 fotosuyla (`images[]`) açılır.
@@ -283,6 +285,16 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 ## 📌 Son Değişiklikler (Changelog)
 
 > Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
+
+- **[2026-05-17] Story scroll köprüleri + hover-preview Hakkımızda**
+  - **YENİ `StoryScroll.js`:** `FlowArt` (default) + `FlowSection` (named export). GSAP `ScrollTrigger` ile pinned scroll — her panel bir öncekini pinler, sonraki 30° açıyla gelip düzleşir (`pinSpacing: false`, `scrub: true`). `prefers-reduced-motion` desteği (`useEffect` + `matchMedia`). Saf CSS class'ları; Tailwind yok. Dosya: [app/components/StoryScroll.js](app/components/StoryScroll.js).
+  - **YENİ `HoverPreview.js`:** `HoverPreviewProvider` (React context) + `HoverLink` + `PreviewCard`. Anahtar kelimeler üzerine gelince `position:fixed` koyu pop-up kart belirir; viewport sınır kontrolü (sol/sağ/üst taşmaz). `PREVIEW_DATA` sabiti 6 konu içeriyor — görseller şimdilik `/project-*.png`. Tüm stiller `globals.css`'te. Dosya: [app/components/HoverPreview.js](app/components/HoverPreview.js).
+  - **`AboutSection` yeniden yazıldı ([page.js:390](app/page.js#L390)):** SVG arka plan kaldırıldı; krem zemin (`#fafaf8`). 4 paragraf Türkçe ajans tanıtım metni. 6 kelime `<HoverLink>` ile sarılı (tasarim, gelistirme, strateji, animasyon, marka, eticaret). `HoverPreviewProvider` ile sarmalandı.
+  - **YENİ `StoryBridgeOne` ([page.js](app/page.js)):** 2 panel — TILSIM (kırmızı `var(--ketchup-red)`, "#fff") ve VİZYON (koyu yeşil `#2d3a1e`, krem). Projeler ile Hakkımızda arasında.
+  - **YENİ `StoryBridgeTwo` ([page.js](app/page.js)):** 2 panel — TUTKU (mavi `var(--sky-blue)`, koyu lacivert) ve KIVILCIM (sarı `var(--sunshine-yellow)`, koyu amber). Hakkımızda ile İletişim arasında.
+  - **`<main>` sıralaması güncellendi:** Hero → Projects → StoryBridgeOne → About → StoryBridgeTwo → Contact → Footer.
+  - **`globals.css` yeni bloklar:** `.klee-flow-art`, `.klee-flow-section`, `.klee-flow-inner`, `.story-panel-*`, `.klee-hover-link`, `.klee-preview-card`, `.klee-preview-card-inner`, `.about-*` (lead, paragraphs, paragraph). Toplam ~200 satır eklendi. Dosya: [app/globals.css](app/globals.css).
+  - **`page.js` import satırları:** `FlowArt`, `FlowSection`, `HoverPreviewProvider`, `HoverLink` eklendi ([page.js:5-8](app/page.js#L5)).
 
 - **[2026-05-16] Menü ş̧erit / Intro yatay / Scroll bar dolum / Theme scope / Galeri-modal contain düzeltmeleri**
   - **Menu siyah şerit fix:** `.menu-overlay` opacity-only + `visibility` toggle ile snap-açıl (0.12s). İç linklerden `translateY(24px)` kaldırıldı; sadece opacity stagger (0.05s→0.34s). Üstteki "siyah kayma" tamamen yok. Dosya: [globals.css `.menu-overlay`](app/globals.css).
