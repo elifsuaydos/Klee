@@ -1,89 +1,22 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 
 import KleeHeroAnimation from "./components/KleeHeroAnimation";
 import { RandomLetterSwapPingPong } from "./components/RandomLetterSwap";
-import GalleryModal from "./components/GalleryModal";
 import ImageGallery from "./components/ImageGallery";
 import FlowArt, { FlowSection } from "./components/StoryScroll";
-import AboutCursorTrail from "./components/AboutCursorTrail";
+import { PROJECTS_GALLERY } from "./lib/projects";
 
-/* ================================================
-   DATA
-   ================================================ */
-const PROJECTS_GALLERY = [
-  {
-    image: "/project-1.png",
-    images: [
-      "/project-1.png",
-      "/project-1.png",
-      "/project-1.png",
-      "/project-1.png",
-      "/project-1.png",
-    ],
-    tag: "E-Ticaret",
-    tagClass: "tag-blue",
-    title: "Luxe Commerce",
-    desc: "Premium e-ticaret platformu — modern alışveriş deneyimi.",
-  },
-  {
-    image: "/project-2.png",
-    images: [
-      "/project-2.png",
-      "/project-2.png",
-      "/project-2.png",
-      "/project-2.png",
-      "/project-2.png",
-    ],
-    tag: "Mobil Uygulama",
-    tagClass: "tag-green",
-    title: "FitTrack",
-    desc: "Sağlık & fitness takip uygulaması.",
-  },
-  {
-    image: "/project-3.png",
-    images: [
-      "/project-3.png",
-      "/project-3.png",
-      "/project-3.png",
-      "/project-3.png",
-      "/project-3.png",
-    ],
-    tag: "Emlak",
-    tagClass: "tag-red",
-    title: "Evora",
-    desc: "Akıllı emlak arama platformu.",
-  },
-  {
-    image: "/project-4.png",
-    images: [
-      "/project-4.png",
-      "/project-4.png",
-      "/project-4.png",
-      "/project-4.png",
-      "/project-4.png",
-    ],
-    tag: "SaaS",
-    tagClass: "tag-yellow",
-    title: "DataPulse",
-    desc: "Analitik dashboard çözümü.",
-  },
-  {
-    image: "/project-5.png",
-    images: [
-      "/project-5.png",
-      "/project-5.png",
-      "/project-5.png",
-      "/project-5.png",
-      "/project-5.png",
-    ],
-    tag: "Yemek Sipariş",
-    tagClass: "tag-red",
-    title: "TasteHub",
-    desc: "Yemek sipariş & teslimat platformu.",
-  },
-];
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+/* PROJECTS_GALLERY imported from ./lib/projects */
 
 /* ================================================
    ICONS (inline SVG)
@@ -138,6 +71,16 @@ const PhoneIcon = () => (
       strokeLinejoin="round"
       d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
     />
+  </svg>
+);
+
+const GitHubIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .319.216.694.825.576C20.565 21.796 24 17.3 24 12c0-6.63-5.37-12-12-12z" />
   </svg>
 );
 
@@ -336,23 +279,22 @@ function MenuOverlay({ isOpen, onClose }) {
    ================================================ */
 function ScrollProgress() {
   const barRef = useRef(null);
+  const wrapRef = useRef(null);
 
   useEffect(() => {
     let rafId = 0;
     let queued = false;
     const update = () => {
       queued = false;
-      if (!barRef.current) return;
-      // When hero handoff completes, snap bar to full
-      if (document.body.dataset.heroComplete === "true") {
-        barRef.current.style.transform = "scaleX(1)";
-        return;
-      }
+      if (!barRef.current || !wrapRef.current) return;
       const scrollTop = window.scrollY;
       const docHeight =
         document.documentElement.scrollHeight - window.innerHeight;
       const pct = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
-      barRef.current.style.transform = `scaleX(${pct})`;
+      // translateY(-50%) centers the thicker bar over the thin track
+      barRef.current.style.transform = `translateY(-50%) scaleX(${pct})`;
+      // fade out when within ~3% of the bottom
+      wrapRef.current.style.opacity = pct >= 0.97 ? "0" : "1";
     };
     const onScroll = () => {
       if (!queued) {
@@ -363,22 +305,15 @@ function ScrollProgress() {
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
-    // React to hero-complete flag flips (handoff moment)
-    const mo = new MutationObserver(onScroll);
-    mo.observe(document.body, {
-      attributes: true,
-      attributeFilter: ["data-hero-complete"],
-    });
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
-      mo.disconnect();
       cancelAnimationFrame(rafId);
     };
   }, []);
 
   return (
-    <div className="scroll-progress-indicator" aria-hidden="true">
+    <div ref={wrapRef} className="scroll-progress-indicator" aria-hidden="true">
       <div className="scroll-progress-track">
         <div ref={barRef} className="scroll-progress-bar" />
       </div>
@@ -414,7 +349,7 @@ function StoryBridgeAll() {
             </h2>
           </div>
           <hr className="story-panel-divider" />
-          <p className="story-panel-body">
+          <p className="story-panel-body-right">
             Sıradan olanı olağanüstüye dönüştüren şey detaylardır. Her piksel,
             her geçiş, her etkileşim — hepsinde anlam ve özen arıyoruz.
             Yaptığımız işin büyüsü bu dikkatten doğuyor.
@@ -438,6 +373,10 @@ function StoryBridgeAll() {
             </h2>
           </div>
           <hr className="story-panel-divider" />
+          <p className="story-panel-body-right">
+            Kod satırlarının arasında büyüyen hayaller, en iyi ürünlerin
+            tohumlarıdır...
+          </p>
         </FlowSection>
 
         {/* Panel 3 — HAKKIMIZDA / Kırmızı */}
@@ -451,17 +390,18 @@ function StoryBridgeAll() {
             <h2 className="story-panel-heading">
               Ankara
               <br />
-              Merkezli Bir 
+              Merkezli Bir
               <br />
               Oluşumuz
             </h2>
           </div>
           <hr className="story-panel-divider" />
+          <p className="story-panel-body-right">
+            Ankara'dan dünyaya uzanan bağlantılarla, coğrafi sınırları aşan
+            projeler üretiyoruz...
+          </p>
         </FlowSection>
       </FlowArt>
-
-      {/* Cursor trail for hover words inside the Hakkımızda card */}
-      <AboutCursorTrail targetClass="about-hover-word" />
     </section>
   );
 }
@@ -470,19 +410,32 @@ function StoryBridgeAll() {
    PROJECTS SECTION
    ================================================ */
 function ProjectsSection() {
-  const [galleryOpen, setGalleryOpen] = useState(false);
-  const [galleryProjectIndex, setGalleryProjectIndex] = useState(0);
+  const sectionRef = useRef(null);
+  const router = useRouter();
 
-  const handleItemClick = useCallback((idx) => {
-    setGalleryProjectIndex(idx);
-    setGalleryOpen(true);
-  }, []);
+  useGSAP(
+    () => {
+      const trigger = ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=500",
+        pin: true,
+        pinSpacing: true,
+      });
+      return () => trigger.kill();
+    },
+    { scope: sectionRef },
+  );
 
-  const activeProject =
-    PROJECTS_GALLERY[galleryProjectIndex] ?? PROJECTS_GALLERY[0];
+  const handleItemClick = useCallback(
+    (idx) => {
+      router.push(`/projects/${PROJECTS_GALLERY[idx].slug}`);
+    },
+    [router],
+  );
 
   return (
-    <section className="projects" id="projects">
+    <section className="projects" id="projects" ref={sectionRef}>
       {/* Clover-shaped dark background */}
       <svg
         className="projects-clover-bg"
@@ -518,14 +471,6 @@ function ProjectsSection() {
       <div className="projects-gallery-full">
         <ImageGallery items={PROJECTS_GALLERY} onItemClick={handleItemClick} />
       </div>
-
-      <GalleryModal
-        isOpen={galleryOpen}
-        images={activeProject.images}
-        project={activeProject}
-        initialIndex={0}
-        onClose={() => setGalleryOpen(false)}
-      />
     </section>
   );
 }
@@ -552,7 +497,7 @@ function ContactSection() {
 
           <div className="contact-info">
             <div className="contact-info-list">
-              <div className="contact-info-item">
+              <div className="contact-info-item contact-info-item--email">
                 <div className="contact-info-icon">
                   <MailIcon />
                 </div>
@@ -562,7 +507,7 @@ function ContactSection() {
                 </div>
               </div>
 
-              <div className="contact-info-item">
+              <div className="contact-info-item contact-info-item--phone">
                 <div className="contact-info-icon">
                   <PhoneIcon />
                 </div>
@@ -572,7 +517,7 @@ function ContactSection() {
                 </div>
               </div>
 
-              <div className="contact-info-item">
+              <div className="contact-info-item contact-info-item--location">
                 <div className="contact-info-icon">
                   <LocationIcon />
                 </div>
@@ -582,6 +527,23 @@ function ContactSection() {
                   <div className="contact-info-sub">
                     Dünya genelinde uzaktan çalışmaya açığız.
                   </div>
+                </div>
+              </div>
+
+              <div className="contact-info-item contact-info-item--github">
+                <div className="contact-info-icon">
+                  <GitHubIcon />
+                </div>
+                <div>
+                  <div className="contact-info-label">GitHub</div>
+                  <a
+                    href="https://github.com/klee-agency"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="contact-info-value contact-info-link"
+                  >
+                    github.com/klee-agency
+                  </a>
                 </div>
               </div>
             </div>
@@ -626,6 +588,14 @@ function Footer() {
           </a>
           <a href="tel:05443706533" className="footer-link">
             Phone
+          </a>
+          <a
+            href="https://github.com/klee-agency"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-link"
+          >
+            GitHub
           </a>
         </div>
         <span className="footer-copy">© MADE WITH ❤️ BY ENGINEERS.</span>

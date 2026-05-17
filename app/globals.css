@@ -507,75 +507,50 @@ body[data-menu-open="true"] .menu-trigger-icon span:nth-child(3) {
   bottom: 28px;
   right: 28px;
   left: auto;
-  transform: none;
   display: inline-flex;
   align-items: center;
   gap: 12px;
   padding: 0;
-  border-radius: 0;
   background: transparent;
-  backdrop-filter: none;
   z-index: 500;
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  mix-blend-mode: difference;
+  transition: opacity 0.4s ease;
 }
+
 
 .scroll-progress-track {
   position: relative;
   width: 140px;
-  height: 2px;
-  background: rgba(15, 23, 42, 0.12);
+  /* thin empty track */
+  height: 1.5px;
+  background: rgba(255, 255, 255, 0.28);
   border-radius: 999px;
-  overflow: hidden;
-  transition: background 0.35s ease;
+  /* no overflow:hidden — bar is taller and protrudes above/below */
+  overflow: visible;
 }
 
 .scroll-progress-bar {
   position: absolute;
-  top: 0;
+  /* center bar vertically over the thin track */
+  top: 50%;
   left: 0;
   width: 100%;
-  height: 100%;
-  background: var(--gray-900);
+  /* thicker filled side */
+  height: 4px;
+  background: #ffffff;
   border-radius: 999px;
-  transform: scaleX(0);
+  /* translateY(-50%) re-centers; scaleX tracks real scroll via JS RAF — no CSS transition so fill is always frame-perfect */
+  transform: translateY(-50%) scaleX(0);
   transform-origin: left center;
   will-change: transform;
-  transition: background 0.35s ease;
-}
-
-/* When hero handoff completes, smoothly snap bar to full before fade-out */
-body[data-hero-complete="true"] .scroll-progress-bar {
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), background 0.35s ease;
 }
 
 .scroll-progress-label {
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--gray-700);
+  color: #ffffff;
   white-space: nowrap;
-  transition: color 0.35s ease;
-}
-
-/* Dark theme (scroll progress adapts over dark sections) */
-body[data-theme="dark"] .scroll-progress-label {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-body[data-theme="dark"] .scroll-progress-track {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-body[data-theme="dark"] .scroll-progress-bar {
-  background: #ffffff;
-}
-
-body[data-hero-complete="true"] .scroll-progress-indicator {
-  opacity: 0;
-  transform: translateY(8px);
-  pointer-events: none;
-  /* delay fade-out so the user sees the bar fill at handoff */
-  transition: opacity 0.4s ease 0.55s, transform 0.4s ease 0.55s;
 }
 
 /* ========================================
@@ -645,8 +620,13 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
    PROJECTS SECTION
    ======================================== */
 .projects {
-  background: #ffffff;
-  height: 120vh;
+  background: linear-gradient(to right,
+      rgba(244, 214, 140, 0.3) 0%,
+      rgba(255, 255, 255, 1) 28%,
+      rgba(255, 255, 255, 1) 72%,
+      rgba(244, 214, 140, 0.3) 100%);
+
+  height: 105vh;
   padding: var(--section-padding);
   position: relative;
   overflow: hidden;
@@ -687,9 +667,9 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
 }
 
 .projects-title {
-  font-family: var(--font-heading);
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.03em;
   margin-bottom: 16px;
@@ -720,7 +700,6 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
   position: relative;
   flex: 1 1 0;
   min-width: 0;
-  border-radius: var(--radius-2xl);
   overflow: hidden;
   background: #111111;
   cursor: pointer;
@@ -821,9 +800,9 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
 }
 
 .contact-header-title {
-  font-family: var(--font-heading);
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 700;
   color: var(--gray-900);
   letter-spacing: -0.03em;
   line-height: 1.2;
@@ -852,6 +831,22 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  padding-left: 14px;
+  border-left: 2px solid transparent;
+  transition: border-color var(--transition-base);
+}
+
+.contact-info-item--email {
+  border-left-color: var(--olive-green);
+}
+.contact-info-item--phone {
+  border-left-color: var(--sky-blue);
+}
+.contact-info-item--location {
+  border-left-color: var(--ketchup-red);
+}
+.contact-info-item--github {
+  border-left-color: var(--sunshine-yellow);
 }
 
 .contact-info-icon {
@@ -866,8 +861,19 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
 }
 
 .contact-info-item:hover .contact-info-icon {
-  color: var(--olive-green);
   transform: translateY(-4px);
+}
+.contact-info-item--email:hover .contact-info-icon {
+  color: var(--olive-green);
+}
+.contact-info-item--phone:hover .contact-info-icon {
+  color: var(--sky-blue);
+}
+.contact-info-item--location:hover .contact-info-icon {
+  color: var(--ketchup-red);
+}
+.contact-info-item--github:hover .contact-info-icon {
+  color: var(--sunshine-yellow);
 }
 
 .contact-info-icon svg {
@@ -894,6 +900,14 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
   font-size: 0.85rem;
   color: var(--gray-400);
   margin-top: 2px;
+}
+
+.contact-info-link {
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+.contact-info-link:hover {
+  color: var(--gray-900);
 }
 
 .contact-cta {
@@ -983,6 +997,7 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
 /* ================================================
    GALLERY IMMERSIVE (full-screen redesign)
    ================================================ */
+/* Overlay kept for reference only — gallery now uses the page route */
 .gallery-immersive-overlay {
   position: fixed;
   inset: 0;
@@ -991,6 +1006,17 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
   display: flex;
   flex-direction: column;
   animation: modalFadeIn 0.3s ease-out forwards;
+}
+
+/* Page-level full-screen gallery (app/projects/[slug]/page.js) */
+.gallery-immersive-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 @keyframes modalFadeIn {
@@ -1003,26 +1029,64 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
   }
 }
 
-/* Full-screen scrollable image area */
-.gallery-immersive-scroll {
+/* Full-screen single-image stage — no scroll */
+.gallery-immersive-stage {
   flex: 1;
-  display: flex;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-
-.gallery-immersive-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.gallery-immersive-slide {
-  flex: 0 0 100vw;
-  width: 100vw;
-  height: 100%;
-  scroll-snap-align: center;
   position: relative;
+  overflow: hidden;
+}
+
+.gallery-immersive-frame {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.gallery-immersive-frame.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Prev / Next arrows — icon only, no background */
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10010;
+  background: none;
+  border: none;
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.gallery-arrow:hover {
+  color: #fff;
+}
+
+.gallery-arrow svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.gallery-arrow--prev {
+  left: 16px;
+}
+
+.gallery-arrow--next {
+  right: 16px;
+}
+
+.gallery-arrow--prev:hover {
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.gallery-arrow--next:hover {
+  transform: translateY(-50%) translateX(4px);
 }
 
 /* Back button — bottom left */
@@ -1117,7 +1181,7 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
   border: 2px solid transparent;
   background: rgba(255, 255, 255, 0.12);
   cursor: pointer;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: none;
   opacity: 1;
   padding: 0;
   flex-shrink: 0;
@@ -1169,6 +1233,8 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
   cursor: pointer;
   color: var(--gray-500);
   transition: color var(--transition-fast);
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .gallery-info-panel-close:hover {
@@ -1532,9 +1598,12 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
 
   /* Scroll progress: smaller on mobile */
   .scroll-progress-indicator {
-    bottom: 28px;
+    bottom: 20px;
     right: 16px;
-    height: 60px;
+  }
+
+  .scroll-progress-track {
+    width: 100px;
   }
 
   .project-tabs {
@@ -1594,7 +1663,7 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
 
   .projects-title,
   .contact-header-title {
-    font-size: 1.75rem;
+    font-size: 1.9rem;
   }
 
   .project-card-content {
@@ -1634,15 +1703,15 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.22em;
-  font-family: var(--font-family);
+  font-family: var(--font-display);
   opacity: 0.7;
 }
 
 .story-panel-heading {
   font-family: var(--font-heading);
-  font-size: clamp(3.5rem, 11vw, 13rem);
+  font-size: clamp(2.4rem, 6.5vw, 7.5rem);
   font-weight: 800;
-  line-height: 0.88;
+  line-height: 0.9;
   text-transform: uppercase;
   letter-spacing: -0.03em;
   margin: 0;
@@ -1653,15 +1722,6 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
   border-top: 1px solid currentColor;
   margin: clamp(1rem, 2.5vw, 2.5rem) 0;
   opacity: 0.35;
-}
-
-.story-panel-body {
-  max-width: 52ch;
-  font-size: clamp(1rem, 2vw, 1.7rem);
-  font-weight: 400;
-  line-height: 1.55;
-  font-family: var(--font-family);
-  margin-top: auto;
 }
 
 .story-panel-body-right {
@@ -1677,11 +1737,10 @@ body[data-hero-complete="true"] .scroll-progress-indicator {
 
 @media (max-width: 767px) {
   .story-panel-heading {
-    font-size: clamp(2.8rem, 16vw, 6rem);
+    font-size: clamp(2rem, 10vw, 4rem);
     line-height: 0.9;
   }
 
-  .story-panel-body,
   .story-panel-body-right {
     font-size: clamp(0.95rem, 4vw, 1.2rem);
     text-align: left;

@@ -12,8 +12,8 @@ export default function LenisProvider({ children }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Horizon sayfasında Lenis kapalı — bileşen kendi native scroll'unu kullanıyor
-    if (pathname.startsWith("/horizon")) return;
+    // Horizon ve projects sayfalarında Lenis kapalı
+    if (pathname.startsWith("/horizon") || pathname.startsWith("/projects")) return;
 
     const lenis = new Lenis({
       duration: 1.2,

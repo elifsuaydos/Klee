@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import HeroFinalCardStack from "./HeroFinalCardStack";
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 function SplitTextChars({ text }) {
@@ -37,7 +38,7 @@ const PETAL_PATH =
 const CYCLE_WORDS = ["deneyimler", "websiteler", "hayaller", "projeler"];
 
 function CyclingWord() {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [, setActiveIndex] = useState(0);
   const wordRefs = useRef([]);
   const indexRef = useRef(0);
   const isAnimating = useRef(false);
@@ -199,6 +200,7 @@ export default function KleeHeroAnimation() {
 
       const topBar = document.querySelector("#top-bar");
       let heroComplete = false;
+      let heroFinalActive = false;
 
       const glowLayer = glowLayerRef.current;
       if (glowLayer) {
@@ -291,9 +293,9 @@ export default function KleeHeroAnimation() {
           : section.clientHeight * mult;
       };
       const scrollEnd = () => {
-        if (isLandscape()) return "900vh";
-        if (isMobile()) return "1100vh";
-        return "1550vh";
+        if (isLandscape()) return "1500vh";
+        if (isMobile()) return "1850vh";
+        return "2500vh";
       };
 
       const rp = redPetalRef.current;
@@ -312,15 +314,25 @@ export default function KleeHeroAnimation() {
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             const isComplete = self.progress >= 0.999;
-            if (
-              isComplete !== heroComplete &&
-              typeof document !== "undefined"
-            ) {
+            if (isComplete !== heroComplete) {
               heroComplete = isComplete;
               if (isComplete) {
                 document.body.dataset.heroComplete = "true";
               } else {
                 delete document.body.dataset.heroComplete;
+              }
+            }
+
+            // Enable card grid only when the final content is visible
+            const fc = finalContentRef.current;
+            const fcOpacity = fc ? parseFloat(fc.style.opacity || "0") : 0;
+            const isFinal = fcOpacity > 0.05 && !isComplete;
+            if (isFinal !== heroFinalActive) {
+              heroFinalActive = isFinal;
+              if (isFinal) {
+                document.body.dataset.heroFinal = "true";
+              } else {
+                delete document.body.dataset.heroFinal;
               }
             }
             // Smooth idle spin kill once scrolling begins
@@ -746,6 +758,7 @@ export default function KleeHeroAnimation() {
         { opacity: 0, y: -20, duration: 0.2, ease: "power2.in" },
         "converge",
       );
+      // Clover spins to navbar position over 2s (scrub:1 needs enough duration to track)
       master.to(
         clover,
         {
@@ -753,58 +766,57 @@ export default function KleeHeroAnimation() {
           y: getNavY,
           scale: 28 / 280,
           rotation: 1980,
-          duration: 2.5,
-          ease: "power2.inOut",
+          duration: 1.2,
+          ease: "expo.out",
         },
         "converge",
       );
       if (glowLayer) {
         master.to(
           glowLayer,
-          {
-            "--glow-opacity": "0",
-            duration: 1.2,
-            ease: "power2.inOut",
-          },
+          { "--glow-opacity": "0", duration: 0.2, ease: "power2.out" },
           "converge",
         );
       }
       if (tintLayer) {
         master.to(
           tintLayer,
-          {
-            "--tint-opacity": "0",
-            duration: 1.2,
-            ease: "power2.inOut",
-          },
+          { "--tint-opacity": "0", duration: 0.2, ease: "power2.out" },
           "converge",
         );
       }
       if (kleeTextNode) {
         master.to(
           kleeTextNode,
-          { x: 0, duration: 1.0, ease: "power2.inOut" },
-          "converge+=0.9",
+          { x: 0, duration: 0.1, ease: "expo.out" },
+          "converge",
         );
       }
+
+      // Clover lands → instantly swap animated clover for the real navbar logo
+      // and reveal the top-bar so it's fully visible during the dwell
+      master.to(clover, { opacity: 0, duration: 0.05 }, "converge+=2");
+      if (navLogoNode) {
+        master.to(navLogoNode, { opacity: 1, duration: 0.05 }, "converge+=2");
+      }
+      if (topBar) {
+        master.to(topBar, { opacity: 1, duration: 0.1 }, "converge+=2");
+      }
+
+      // Final content fades in right after the clover lands
       master.fromTo(
         finalContentRef.current,
         { opacity: 0, scale: 0.96 },
-        { opacity: 1, scale: 1, duration: 1.1, ease: "expo.out" },
-        "converge+=1.8",
+        { opacity: 1, scale: 1, duration: 1, ease: "expo.out" },
+        "converge+=2.2",
       );
 
-      // ── Phase 6: Handoff ──────────────────────────────────────────────
-      master.to(clover, { opacity: 0, duration: 0.05 }, "handoff");
-      if (navLogoNode) {
-        master.to(navLogoNode, { opacity: 1, duration: 0.05 }, "handoff");
-      }
+      // ── Extended dwell: navbar + final content both visible ───────────────────
+      master.to({}, { duration: 5 }, "final-hold");
+
+      // ── Phase 6: Handoff — activate navbar interactions ───────────────────────
       if (topBar) {
-        master.to(
-          topBar,
-          { opacity: 1, pointerEvents: "auto", duration: 0.1 },
-          "handoff",
-        );
+        master.to(topBar, { pointerEvents: "auto", duration: 0.05 }, "handoff");
       }
     },
     { scope: sectionRef },
@@ -826,11 +838,7 @@ export default function KleeHeroAnimation() {
       aria-label="Klee animated hero"
     >
       {/* ── Color glow layer (synced with clover corner travel) ─── */}
-      <div
-        ref={glowLayerRef}
-        className="hero-glow-layer"
-        aria-hidden="true"
-      />
+      <div ref={glowLayerRef} className="hero-glow-layer" aria-hidden="true" />
 
       {/* ── Intro screen: tagline only (no scroll prompt — replaced by scroll progress bar) */}
       <div
@@ -952,7 +960,7 @@ export default function KleeHeroAnimation() {
         </div>
       </div>
 
-      {/* ── Final content: overlay + text (no background image) ───────── */}
+      {/* ── Final content: heading centered + cursor-trail card stack ────── */}
       <div
         ref={finalContentRef}
         className="hero-final-content"
@@ -965,6 +973,7 @@ export default function KleeHeroAnimation() {
             tasarlıyoruz.
           </h1>
         </div>
+        <HeroFinalCardStack sectionRef={sectionRef} />
       </div>
     </section>
   );

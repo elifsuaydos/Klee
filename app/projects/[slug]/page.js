@@ -1,83 +1,58 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import { use, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 import Image from "next/image";
-import { RandomLetterSwapPingPong } from "./RandomLetterSwap";
+import { getProjectBySlug, PROJECTS_GALLERY } from "../../lib/projects";
+import { RandomLetterSwapPingPong } from "../../components/RandomLetterSwap";
+import "../../globals.css";
 
-export default function GalleryModal({
-  isOpen,
-  images,
-  project,
-  initialIndex,
-  onClose,
-}) {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex || 0);
+export default function ProjectPage({ params }) {
+  const { slug } = use(params);
+  const project = getProjectBySlug(slug);
+
+  if (!project) notFound();
+
+  return <GalleryView project={project} />;
+}
+
+function GalleryView({ project }) {
+  const router = useRouter();
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [infoPanelOpen, setInfoPanelOpen] = useState(false);
+
+  const images = project.images;
 
   const goTo = useCallback(
     (idx) => setCurrentIndex(Math.max(0, Math.min(images.length - 1, idx))),
     [images.length],
   );
 
-  // Reset state on open
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentIndex(initialIndex || 0);
-      setInfoPanelOpen(false);
-    }
-  }, [isOpen, initialIndex]);
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) router.back();
+    else router.push("/#projects");
+  }, [router]);
 
-  // Body scroll lock + gallery-open flag (hides scroll progress)
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.dataset.galleryOpen = "true";
-    } else {
-      document.body.style.overflow = "";
-      delete document.body.dataset.galleryOpen;
-    }
-    return () => {
-      document.body.style.overflow = "";
-      delete document.body.dataset.galleryOpen;
-    };
-  }, [isOpen]);
-
-  // Keyboard navigation
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape") {
         if (infoPanelOpen) setInfoPanelOpen(false);
-        else onClose();
+        else handleBack();
       }
       if (e.key === "ArrowLeft") goTo(currentIndex - 1);
       if (e.key === "ArrowRight") goTo(currentIndex + 1);
     };
-    if (isOpen) window.addEventListener("keydown", handleKey);
+    window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [isOpen, infoPanelOpen, currentIndex, onClose, goTo]);
-
-  if (!isOpen) return null;
-
-  const projectInfo = {
-    title: project?.title || "Proje Başlığı",
-    services: project?.tag || "Web Tasarım, Geliştirme",
-    team: "Klee Studio",
-    description:
-      project?.desc ||
-      "Bu proje, müşterimizin dijital varlığını güçlendirmek amacıyla tasarlanmış premium bir web deneyimidir.",
-  };
+  }, [infoPanelOpen, currentIndex, goTo, handleBack]);
 
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < images.length - 1;
 
   return (
-    <div
-      className="gallery-immersive-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label={projectInfo.title}
-    >
-      {/* Single full-screen image — no scrolling */}
+    <main className="gallery-immersive-page">
+      {/* Single full-screen image stage */}
       <div className="gallery-immersive-stage">
         {images.map((src, idx) => (
           <div
@@ -87,7 +62,7 @@ export default function GalleryModal({
           >
             <Image
               src={src}
-              alt={`${projectInfo.title} — görsel ${idx + 1}`}
+              alt={`${project.title} — görsel ${idx + 1}`}
               fill
               style={{ objectFit: "contain", objectPosition: "center" }}
               sizes="100vw"
@@ -100,6 +75,7 @@ export default function GalleryModal({
       {/* Prev arrow */}
       {hasPrev && (
         <button
+          type="button"
           className="gallery-arrow gallery-arrow--prev"
           onClick={() => goTo(currentIndex - 1)}
           aria-label="Önceki görsel"
@@ -113,6 +89,7 @@ export default function GalleryModal({
       {/* Next arrow */}
       {hasNext && (
         <button
+          type="button"
           className="gallery-arrow gallery-arrow--next"
           onClick={() => goTo(currentIndex + 1)}
           aria-label="Sonraki görsel"
@@ -125,8 +102,9 @@ export default function GalleryModal({
 
       {/* Back button — bottom left */}
       <button
+        type="button"
         className="gallery-back-btn"
-        onClick={onClose}
+        onClick={handleBack}
         aria-label="Geri dön"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -135,8 +113,9 @@ export default function GalleryModal({
         <RandomLetterSwapPingPong label="Geri dön" staggerDuration={0.022} />
       </button>
 
-      {/* Project info button — bottom right */}
+      {/* Project info toggle — bottom right */}
       <button
+        type="button"
         className={`gallery-info-btn ${infoPanelOpen ? "active" : ""}`}
         onClick={() => setInfoPanelOpen((v) => !v)}
         aria-label="Proje bilgisi"
@@ -155,13 +134,14 @@ export default function GalleryModal({
         {images.map((src, idx) => (
           <button
             key={idx}
+            type="button"
             className={`gallery-thumbnail ${currentIndex === idx ? "active" : ""}`}
             onClick={() => goTo(idx)}
-            aria-label={`${projectInfo.title} ${idx + 1}`}
+            aria-label={`${project.title} görsel ${idx + 1}`}
           >
             <Image
               src={src}
-              alt={`${projectInfo.title} küçük resim ${idx + 1}`}
+              alt={`${project.title} küçük resim ${idx + 1}`}
               fill
               style={{ objectFit: "cover" }}
               sizes="80px"
@@ -170,15 +150,18 @@ export default function GalleryModal({
         ))}
       </div>
 
-      {/* Right slide-out: Project info panel */}
+      {/* Right slide-out info panel */}
       <aside
         className={`gallery-info-panel ${infoPanelOpen ? "open" : ""}`}
         aria-label="Proje bilgisi paneli"
-        onClick={(e) => e.stopPropagation()}
       >
         <button
+          type="button"
           className="gallery-info-panel-close"
-          onClick={() => setInfoPanelOpen(false)}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            setInfoPanelOpen(false);
+          }}
           aria-label="Paneli kapat"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -188,23 +171,23 @@ export default function GalleryModal({
 
         <div className="gallery-info-panel-content">
           <p className="gallery-info-panel-eyebrow">Proje</p>
-          <h2 className="gallery-info-panel-title">{projectInfo.title}</h2>
+          <h2 className="gallery-info-panel-title">{project.title}</h2>
 
           <div className="gallery-info-panel-section">
             <h3 className="gallery-info-panel-label">Hizmetler</h3>
-            <p className="gallery-info-panel-value">{projectInfo.services}</p>
+            <p className="gallery-info-panel-value">{project.tag}</p>
           </div>
 
           <div className="gallery-info-panel-section">
             <h3 className="gallery-info-panel-label">Ekip</h3>
-            <p className="gallery-info-panel-value">{projectInfo.team}</p>
+            <p className="gallery-info-panel-value">Klee Studio</p>
           </div>
 
           <div className="gallery-info-panel-section gallery-info-panel-desc">
-            <p>{projectInfo.description}</p>
+            <p>{project.desc}</p>
           </div>
         </div>
       </aside>
-    </div>
+    </main>
   );
 }

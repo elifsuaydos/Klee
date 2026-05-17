@@ -67,7 +67,12 @@ Klee-main/
 │       ├── Card3D.js             → 3D mouse-tilt kartı (CardContainer / CardBody / CardItem). Hero final görselinde kullanılıyor. Aceternity-UI'dan port; perspective: 1000px, transition fast (80ms) tracking + slow spring (700ms cubic-bezier) return.
 │       ├── RandomLetterSwap.js   → Hover'da harf-harf rastgele sırayla yukarı/aşağı kayan text efekti. İki export: PingPong (geri döner) ve Forward (tek seferlik). GSAP ile harf bazlı staggered animasyon.
 │       ├── ScrambleText.js       → Matrix benzeri karakter scramble efekti. IntersectionObserver ile otomatik veya hoverOnly. ⚠️ ŞU AN page.js'te import edilmiyor (RandomLetterSwap'a geçildi). Silinmeden önce kontrol et.
-│       ├── GalleryModal.js       → Tam ekran yatay snap-scroll proje galerisi (← → ve kapat butonları). next/image fill + objectFit:contain.
+│       ├── GalleryModal.js       → ⚠️ ARTIK KULLANILMIYOR. Route tabanlı galeriye geçildi. Silinebilir.
+│   ├── projects/
+│   │   └── [slug]/
+│   │       └── page.js           → Gerçek galeri sayfası. `use(params)` ile slug alır, `getProjectBySlug` ile proje bulur, tam sayfa galeri render eder. TopBar/ScrollProgress bu route'da yoktur. "Geri dön" → router.back().
+│   ├── lib/
+│   │   └── projects.js           → PROJECTS_GALLERY verisi (5 proje, her biri slug'lı) + getProjectBySlug(slug) helper.
 │       ├── StoryScroll.js        → FlowArt (default) + FlowSection (named). GSAP ScrollTrigger pinned scroll — alttaki panel 30° açıyla dönerek öncekinin üstüne kayar. `prefers-reduced-motion` desteği. Tailwind'siz, saf CSS class'larıyla (`.klee-flow-art`, `.klee-flow-section`, `.klee-flow-inner`).
 │       └── HoverPreview.js       → HoverPreviewProvider (context) + HoverLink + PreviewCard. Anahtar kelimelerin üstüne gelince `position:fixed` pop-up görsel kart. `PREVIEW_DATA` sabiti 6 konu içeriyor (tasarim/gelistirme/strateji/marka/animasyon/eticaret). Görsel placeholder olarak /project-*.png.
 ├── public/
@@ -100,6 +105,19 @@ Klee-main/
 - **İç bileşenler:**
   - `SplitTextChars` — string'i `<span class="char">` dizisine böler, her karakter ayrı animasyon hedefi olur.
   - `CyclingWord` — final başlıkta "Dijital **deneyimler, websiteler, hayaller, projeler** tasarlıyoruz." kelimesini her **2.4 saniyede** bir slide+blur ile değiştirir. Tüm kelimeler DOM'da, GSAP ile y/opacity/filter/scale animasyonu.
+- **Hero-final iki sütun:** `.hero-final-overlay` içinde `<div class="hero-final-text">` (h1) + `<HeroFinalCardStack>` yan yana. Son hold `final-hold` (5 birim) ile converge ve handoff arasına eklendi. `scrollEnd`: desktop `1950vh`, mobile `1400vh`, landscape `1150vh`.
+
+### 2b. `HeroFinalCardStack` ([app/components/HeroFinalCardStack.js](app/components/HeroFinalCardStack.js))
+
+- **Üç yığın kart** — `STACK_IMAGES = ["/project-1.png", "/project-3.png", "/project-4.png"]`. Her kart `position: absolute` ile `.hero-stack-slot` içinde, rotasyonlu slot'larında durur (viewport-fixed değil).
+- **Cursor swap:** `sectionRef` üzerindeki `mousemove` olayı 120 ms throttle ile `slotOrder` döndürür → öndeki kart değişir. `setInterval` yok; sadece cursor hareketi tetikler.
+- **5 görsel, 10×6 görünmez ızgara:** `STACK_IMAGES = ["/project-1…5.png"]`. 60 hücre (10 sütun × 6 satır), her hücreye `(col*2+row)%5` formülüyle benzersiz görsel atanır — yatay/dikey komşular hiçbir zaman aynı görseli almaz.
+- **Boyut:** `90×63 px` (önceki 300×210 → 180×126 → 90×63). `border-radius: 3px`.
+- **5-slot fan:** SLOTS 5 karta genişledi (back=0 → front=4, dx ±30, dy ±18, rotation ±13).
+- **Hücre hover = görsel önceliklendirme:** Mouse hangi hücrenin üzerindeyse o hücrenin görseli `slotOrderRef` yeniden düzenlenerek front slot'a (index 4) taşınır. `promoteImage(targetIdx)` diğer 4 görseli sırayla 0–3 slot'larına yerleştirir.
+- **Görünmez grid:** `position: fixed; inset: 0; display: grid; 10 cols × 6 rows; z-index: 5`. TopBar (z-index 1000+) ve GalleryModal (9999) üstünde kalmaz.
+- **Akıcı animasyon:** Cursor takibi `FOLLOW_DUR=0.07s power1.out overwrite:auto`; slot geçişi `CYCLE_DUR=0.28s expo.out`; enter `back.out(1.5) stagger 0.025s`; leave cascade `(N-1-i)*0.018 delay power2.in`.
+- **Otomatik devre dışı:** `MutationObserver` `data-hero-complete="true"` flag'ini izler → grid `pointer-events: none`'a döner, kartlar fade-out olur. Hero tamamlandıktan sonra diğer section'lar (Projects, About, Contact) normal event almaya devam eder.
 
 ### 3. `Card3D` ([app/components/Card3D.js](app/components/Card3D.js))
 
@@ -285,6 +303,64 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 ## 📌 Son Değişiklikler (Changelog)
 
 > Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
+
+- **[2026-05-18] Galeri: overlay → gerçek Next.js route (`/projects/[slug]`) + 5 hata düzeltmesi**
+  - **YENİ `app/lib/projects.js`:** `PROJECTS_GALLERY` verisi ve `getProjectBySlug(slug)` helper'ı buraya taşındı. Her projeye `slug` alanı eklendi (`luxe-commerce`, `fittrack`, `evora`, `datapulse`, `tastehub`).
+  - **YENİ `app/projects/[slug]/page.js`:** Tam sayfa galeri. `use(params)` ile slug alınır (Next.js 16 Promise params). Proje bulunamazsa `notFound()`. `useRouter().back()` ile "Geri dön". TopBar/ScrollProgress burada yok — `Home` bileşenine özgü, bu route render etmez.
+  - **`app/page.js`:** `PROJECTS_GALLERY` const kaldırıldı → `./lib/projects`'ten import. `GalleryModal` import + render kaldırıldı. `galleryOpen`/`galleryProjectIndex` state kaldırıldı. `handleItemClick` → `router.push('/projects/${slug}')`. `useRouter` import eklendi.
+  - **`app/components/LenisProvider.js`:** `/projects` prefix'li sayfalarda Lenis bypass.
+  - **`app/globals.css`:** `.gallery-immersive-page` (page-level wrapper, `position: relative; min-height: 100vh`). `.gallery-thumbnail` `transition: none` (thumbnail glitch düzeltmesi). `.gallery-arrow` arka plan/border/radius kaldırıldı, SVG-only 28px, hover sadece renk+translate. `.gallery-info-panel-close` `z-index: 2; pointer-events: auto` eklendi. `body[data-gallery-open]` kuralı kaldırıldı.
+  - **`app/components/GalleryModal.js`:** Artık kullanılmıyor (silinebilir — dosya yerinde duruyor).
+  - Dosyalar: [app/lib/projects.js](app/lib/projects.js), [app/projects/[slug]/page.js](app/projects/[slug]/page.js), [app/page.js](app/page.js), [app/components/LenisProvider.js](app/components/LenisProvider.js), [app/globals.css](app/globals.css).
+
+- **[2026-05-18] GalleryModal: scroll kaldırıldı, tek frame görünümü + ok butonları + scroll-progress gizleme**
+  - `GalleryModal.js` tamamen yeniden yazıldı. Yatay snap-scroll (`overflow-x: auto`, `scroll-snap-type`) kaldırıldı. Yerine `.gallery-immersive-stage` + `.gallery-immersive-frame` yapısı: tüm görseller `position: absolute; inset: 0` üst üste, aktif olan `opacity: 1` (0.35s fade), diğerleri `opacity: 0`. `scrollContainerRef` ve scroll event listener kaldırıldı; navigasyon artık sadece `setCurrentIndex` ile.
+  - Prev/Next ok butonları eklendi (`.gallery-arrow--prev` / `--next`): `position: absolute; top: 50%`; yarı saydam yuvarlak zemin; hover'da beyazlaşır; ilk/son görselde ilgili ok gizlenir.
+  - `document.body.dataset.galleryOpen = "true"` — modal açılınca set, kapanınca silinir. CSS `body[data-gallery-open="true"] .scroll-progress-indicator { opacity: 0 !important }` ile "aşağı kaydır" indikatörü gizlenir.
+  - Thumbnail tıklaması artık doğrudan `goTo(idx)` çağırır (eski `scrollToIndex` kaldırıldı).
+  - Dosyalar: [app/components/GalleryModal.js](app/components/GalleryModal.js), [app/globals.css](app/globals.css).
+
+- **[2026-05-18] Projeler bölümüne 5 saniyelik dwell (pin) eklendi**
+  - `ProjectsSection`'a GSAP ScrollTrigger pin eklendi: `start:"top top"`, `end:"+=500"`, `pin:true`, `pinSpacing:true`. Bölüm viewport'a girdiğinde 500px scroll boyunca sabit kalır (~5 sn normal scroll hızında). `page.js` üst kısmına `gsap`, `ScrollTrigger`, `useGSAP` import'ları ve `gsap.registerPlugin(ScrollTrigger)` eklendi. Dosya: [app/page.js](app/page.js).
+
+- **[2026-05-18] Tipografi & İletişim Renk Aksan Paketi**
+  - **`.projects-title` ve `.contact-header-title` Cormorant'a geçti:** `font-family: var(--font-heading)` → `var(--font-display)` (Cormorant Garamond). Font-size `clamp(2rem, 4vw, 3rem)` → `clamp(2.2rem, 4.5vw, 3.4rem)`, weight `800→700`. Mobil override `1.75rem→1.9rem`. Dosya: [app/globals.css](app/globals.css).
+  - **Story panel başlıkları küçültüldü:** `.story-panel-heading` `clamp(3.5rem, 11vw, 13rem)` → `clamp(2.4rem, 6.5vw, 7.5rem)`. Mobil `clamp(2.8rem, 16vw, 6rem)` → `clamp(2rem, 10vw, 4rem)`. Dosya: [app/globals.css](app/globals.css).
+  - **Panel 2 (mavi) ve Panel 3 (kırmızı) sağ metin eklendi:** Panel 2'ye "Kod satırlarının arasında büyüyen hayaller..." ve Panel 3'e "Ankara'dan dünyaya uzanan bağlantılarla..." `.story-panel-body-right` ile eklendi. Dosya: [app/page.js](app/page.js#L426).
+  - **Contact item marka rengi sol çizgi:** Her item'a modifier class eklendi — `--email` (olive-green), `--phone` (sky-blue), `--location` (ketchup-red), `--github` (sunshine-yellow). `border-left: 2px solid` + `padding-left: 14px`. Hover'da icon da aynı rengi alır. Dosyalar: [app/page.js](app/page.js#L554), [app/globals.css](app/globals.css).
+
+- **[2026-05-17] 3 düzeltme: CardStack sadece final bölümde + cursor hizalama + converge navbar dwell fix**
+  - **CardStack yalnızca final bölümde:** `finalContentRef.current.style.opacity` onUpdate'te izlenir; opacity > 0.05 olduğunda `document.body.dataset.heroFinal = "true"` set edilir. `HeroFinalCardStack`'te grid artık `pointer-events: none` ile başlar; `MutationObserver` `data-hero-final` + `data-hero-complete` izler → sadece `heroFinal === true && !heroComplete` durumunda grid aktif olur. Dosyalar: [app/components/KleeHeroAnimation.js](app/components/KleeHeroAnimation.js), [app/components/HeroFinalCardStack.js](app/components/HeroFinalCardStack.js).
+  - **Cursor hizalaması:** Kart imajının sol-üst köşesi cursor ucuna hizalandı. `moveToPos`: `left: cx, top: cy` (önceki `cx - IMG_W/2, cy - IMG_H/2`). Dosya: [app/components/HeroFinalCardStack.js](app/components/HeroFinalCardStack.js).
+  - **Converge navbar dwell fix:** Converge süresi 2s expo.out (scrub:1 için yeterli). `converge+=2` anında: hero clover opacity:0, navLogoNode opacity:1, topBar opacity:1 → navbar tam görünür olarak clover ile birlikte. `converge+=2.2`: finalContent fade-in. Final-hold: 14 birim (topBar + clover logo + final content hepsi görünür). Handoff artık sadece `pointerEvents: auto` set eder (diğer swap'lar converge'de tamamlandı). Dosya: [app/components/KleeHeroAnimation.js](app/components/KleeHeroAnimation.js).
+
+- **[2026-05-17] 3 düzeltme: HeroFinalCardStack scroll-back fix + converge hızlandırma + GitHub iletişim**
+  - **HeroFinalCardStack scroll-back fix:** `MutationObserver` artık hero-complete flag silindiğinde (`heroComplete !== "true"`) grid'i `pointer-events: auto`'ya geri alır. Önceden ileri-geri scroll'da grid `pointer-events: none` kalıyordu ve animasyon bozuluyordu. Dosya: [app/components/HeroFinalCardStack.js](app/components/HeroFinalCardStack.js).
+  - **Converge hızlandırma:** Clover navbar'a `0.5s expo.out` ile snap (önceki 2.5s power2.inOut). Glow/tint fade `0.4s`. kleeText slide `converge+=0.1s`. finalContent fade-in `converge+=0.3s` (önceki +=1.8s). `final-hold` `5 → 14` birim; `scrollEnd` desktop `1950 → 2500vh`, mobile `1400 → 1850vh`, landscape `1150 → 1500vh`. Dosya: [app/components/KleeHeroAnimation.js](app/components/KleeHeroAnimation.js).
+  - **GitHub iletişim & footer:** `GitHubIcon` (filled GitHub mark SVG) eklendi. Contact section'a 4. kart (GitHub / github.com/klee-agency, tıklanabilir link). Footer'a "GitHub" linki eklendi. `.contact-info-link` hover CSS kuralı eklendi. Dosyalar: [app/page.js](app/page.js), [app/globals.css](app/globals.css).
+
+- **[2026-05-17] HeroFinalCardStack: 10×6 görünmez ızgara + hücre bazlı görsel önceliklendirme + 90×63 px mini kartlar**
+  - Kart boyutu `300×210 → 90×63 px` (iki adımda küçültüldü).
+  - Yeni invisible grid: `position:fixed; inset:0; display:grid; 10cols×6rows; z-index:5`. Her hücreye `(col*2+row)%5` ile komşusundan farklı görsel atanır.
+  - Mouse hangi hücreye girerse o görseli `promoteImage()` ile front slot'a taşır; GSAP `expo.out 0.28s` ile yumuşak yeniden sıralama.
+  - Grid eventleri (`mouseenter/move/leave` container-level) show/hide'ı yönetir; hücre `mouseenter` → görsel değiştirme.
+  - `MutationObserver` `data-hero-complete` flag'ini izler → hero bitince grid devre dışı kalır.
+  - Eski `setInterval` döngüsü kaldırıldı; tetikleyici artık yalnızca hücre geçişleri.
+  - Dosya: [app/components/HeroFinalCardStack.js](app/components/HeroFinalCardStack.js).
+
+- **[2026-05-17] HeroFinalCardStack: 5 görsel, küçük kartlar, hızlı & akıcı animasyon**
+  - `STACK_IMAGES` 3→5 görsel (`project-1…5.png`). 5 slot eklendi, back→front fan şekli korundu.
+  - Kart boyutu `300×210 → 180×126 px`; `border-radius: 4px`.
+  - Otomatik döngü `700ms → 420ms`; mousemove throttle `120ms → 80ms`. Her move-cycle sonunda interval sıfırlanır (çift tetik yok).
+  - Cursor takibi `gsap.to duration:0.08s power1.out overwrite:"auto"` (önceki anlık gsap.set'in yerini aldı).
+  - Slot geçişi `expo.out 0.35s`; enter `back.out(1.4) + y:10→0 stagger 0.03s`; leave cascade `(N-1-i)*0.02 delay power2.in`.
+  - Dosya: [app/components/HeroFinalCardStack.js](app/components/HeroFinalCardStack.js).
+
+- **[2026-05-17] Hero-final: üç kart yığını + uzatılmış hold + cursor swap**
+  - **YENİ `HeroFinalCardStack.js`:** Hero-final "Dijital…tasarlıyoruz." bölümünde 3 görsel kart yığını. Kartlar `position: absolute` ile `.hero-stack-slot` içinde durur (viewport-fixed değil). `mousemove` (120 ms throttle) her harekette `slotOrder` döndürür → öndeki kart değişir. Paralaks: `gsap.quickTo` ile yığın ±16/10 px kayar. Dosya: [app/components/HeroFinalCardStack.js](app/components/HeroFinalCardStack.js).
+  - **`AboutCursorTrail` hero'ya taşındı:** `page.js` AboutSection'dan `<AboutCursorTrail>` kaldırıldı. Artık kullanılmıyor (dosya duruyor). Dosya: [app/page.js](app/page.js).
+  - **Hero-final hold uzatıldı:** `master.to({}, { duration: 5 }, "final-hold")` tweeni converge ile handoff arasına eklendi. `scrollEnd` değerleri: desktop `1550→1950vh`, mobile `1100→1400vh`, landscape `900→1150vh`. Dosya: [app/components/KleeHeroAnimation.js](app/components/KleeHeroAnimation.js).
+  - **Hero-final iki sütun layout:** `.hero-final-overlay` artık `flex` + gap + iki çocuk: `.hero-final-text` (h1) ve `.hero-stack-slot` (kartlar). Mobile'da `flex-direction: column`. Dosya: [app/globals.css](app/globals.css).
 
 - **[2026-05-17] Story scroll köprüleri + hover-preview Hakkımızda**
   - **YENİ `StoryScroll.js`:** `FlowArt` (default) + `FlowSection` (named export). GSAP `ScrollTrigger` ile pinned scroll — her panel bir öncekini pinler, sonraki 30° açıyla gelip düzleşir (`pinSpacing: false`, `scrub: true`). `prefers-reduced-motion` desteği (`useEffect` + `matchMedia`). Saf CSS class'ları; Tailwind yok. Dosya: [app/components/StoryScroll.js](app/components/StoryScroll.js).
