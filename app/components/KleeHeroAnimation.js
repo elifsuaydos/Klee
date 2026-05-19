@@ -160,6 +160,7 @@ const CLOVER_STYLE = {
   marginLeft: "-140px",
   marginTop: "-140px",
   transformOrigin: "center center",
+  zIndex: 6,
 };
 
 export default function KleeHeroAnimation() {
@@ -176,10 +177,12 @@ export default function KleeHeroAnimation() {
   const step4Ref = useRef(null);
   const finalContentRef = useRef(null);
 
-  const redPetalRef = useRef(null);
-  const yellowPetalRef = useRef(null);
-  const bluePetalRef = useRef(null);
-  const greenPetalRef = useRef(null);
+  // Disable cursor-based card stack on touch devices — the invisible grid
+  // overlay intercepts all touch events and the hover interaction is meaningless.
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    setIsTouch(window.matchMedia("(hover: none) and (pointer: coarse)").matches);
+  }, []);
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -271,8 +274,8 @@ export default function KleeHeroAnimation() {
         return isMobile() ? 1.8 : 2.8;
       };
       const cornerScale = () => {
-        if (isLandscape()) return 2.5;
-        return isMobile() ? 3.5 : 6;
+        if (isLandscape()) return 2.0;
+        return isMobile() ? 3.0 : 6;
       };
       const cX = (side) => {
         let mult;
@@ -293,15 +296,10 @@ export default function KleeHeroAnimation() {
           : section.clientHeight * mult;
       };
       const scrollEnd = () => {
-        if (isLandscape()) return "1500vh";
-        if (isMobile()) return "1850vh";
+        if (isLandscape()) return "700vh";
+        if (isMobile()) return "900vh";
         return "2500vh";
       };
-
-      const rp = redPetalRef.current;
-      const yp = yellowPetalRef.current;
-      const bp = bluePetalRef.current;
-      const gp = greenPetalRef.current;
 
       const master = gsap.timeline({
         scrollTrigger: {
@@ -439,16 +437,6 @@ export default function KleeHeroAnimation() {
         "step1+=1.5",
       );
       master.to({}, { duration: 1.5 }, "step1-hold");
-      master.to(
-        [rp, yp, gp],
-        { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
-        "step1-hold",
-      );
-      master.to(
-        [rp, yp, gp],
-        { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
-        "step1-hold+=1.0",
-      );
 
       // ── Transition 1→2 ───────────────────────────────────────────────
       master.to(
@@ -532,16 +520,6 @@ export default function KleeHeroAnimation() {
         "step2+=1.5",
       );
       master.to({}, { duration: 1.5 }, "step2-hold");
-      master.to(
-        [yp, bp, gp],
-        { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
-        "step2-hold",
-      );
-      master.to(
-        [yp, bp, gp],
-        { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
-        "step2-hold+=1.0",
-      );
 
       // ── Transition 2→3 ───────────────────────────────────────────────
       master.to(
@@ -625,16 +603,6 @@ export default function KleeHeroAnimation() {
         "step3+=1.5",
       );
       master.to({}, { duration: 1.5 }, "step3-hold");
-      master.to(
-        [rp, yp, bp],
-        { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
-        "step3-hold",
-      );
-      master.to(
-        [rp, yp, bp],
-        { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
-        "step3-hold+=1.0",
-      );
 
       // ── Transition 3→4 ───────────────────────────────────────────────
       master.to(
@@ -718,16 +686,6 @@ export default function KleeHeroAnimation() {
         "step4+=1.5",
       );
       master.to({}, { duration: 1.5 }, "step4-hold");
-      master.to(
-        [rp, bp, gp],
-        { opacity: 0.15, duration: 0.5, ease: "power2.inOut" },
-        "step4-hold",
-      );
-      master.to(
-        [rp, bp, gp],
-        { opacity: 0.92, duration: 0.5, ease: "power2.inOut" },
-        "step4-hold+=1.0",
-      );
 
       // ── Phase 5: Converge to top-bar clover logo (top center) ────────
       const navLogoNode = document.querySelector(".navbar-clover-logo");
@@ -758,7 +716,8 @@ export default function KleeHeroAnimation() {
         { opacity: 0, y: -20, duration: 0.2, ease: "power2.in" },
         "converge",
       );
-      // Clover spins to navbar position over 2s (scrub:1 needs enough duration to track)
+      // Clover spins to navbar AND final content reveals simultaneously —
+      // both start at "converge" and complete after 1.2 timeline units.
       master.to(
         clover,
         {
@@ -771,48 +730,45 @@ export default function KleeHeroAnimation() {
         },
         "converge",
       );
+      master.fromTo(
+        finalContentRef.current,
+        { opacity: 0, scale: 0.96 },
+        { opacity: 1, scale: 1, duration: 1.2, ease: "expo.out" },
+        "converge",
+      );
       if (glowLayer) {
         master.to(
           glowLayer,
-          { "--glow-opacity": "0", duration: 0.2, ease: "power2.out" },
-          "converge",
+          { "--glow-opacity": "0", duration: 0.8, ease: "power2.out" },
+          "converge+=3",
         );
       }
       if (tintLayer) {
         master.to(
           tintLayer,
-          { "--tint-opacity": "0", duration: 0.2, ease: "power2.out" },
-          "converge",
+          { "--tint-opacity": "0", duration: 0.8, ease: "power2.out" },
+          "converge+=3",
         );
       }
       if (kleeTextNode) {
         master.to(
           kleeTextNode,
-          { x: 0, duration: 0.1, ease: "expo.out" },
+          { x: 0, duration: 2.4, ease: "expo.out" },
           "converge",
         );
       }
 
-      // Clover lands → instantly swap animated clover for the real navbar logo
-      // and reveal the top-bar so it's fully visible during the dwell
-      master.to(clover, { opacity: 0, duration: 0.05 }, "converge+=2");
+      // Clover lands → swap animated clover for the real navbar logo
+      master.to(clover, { opacity: 0, duration: 0.05 }, "converge+=1.2");
       if (navLogoNode) {
-        master.to(navLogoNode, { opacity: 1, duration: 0.05 }, "converge+=2");
+        master.to(navLogoNode, { opacity: 1, duration: 0.05 }, "converge+=1.2");
       }
       if (topBar) {
-        master.to(topBar, { opacity: 1, duration: 0.1 }, "converge+=2");
+        master.to(topBar, { opacity: 1, duration: 0.1 }, "converge+=1.2");
       }
 
-      // Final content fades in right after the clover lands
-      master.fromTo(
-        finalContentRef.current,
-        { opacity: 0, scale: 0.96 },
-        { opacity: 1, scale: 1, duration: 1, ease: "expo.out" },
-        "converge+=2.2",
-      );
-
       // ── Extended dwell: navbar + final content both visible ───────────────────
-      master.to({}, { duration: 5 }, "final-hold");
+      master.to({}, { duration: 3 }, "final-hold");
 
       // ── Phase 6: Handoff — activate navbar interactions ───────────────────────
       if (topBar) {
@@ -837,7 +793,8 @@ export default function KleeHeroAnimation() {
       }}
       aria-label="Klee animated hero"
     >
-      {/* ── Color glow layer (synced with clover corner travel) ─── */}
+      {/* ── Color layers (behind clover, synced with corner travel) ─── */}
+      <div ref={tintLayerRef} className="hero-tint-layer" aria-hidden="true" />
       <div ref={glowLayerRef} className="hero-glow-layer" aria-hidden="true" />
 
       {/* ── Intro screen: tagline only (no scroll prompt — replaced by scroll progress bar) */}
@@ -864,28 +821,24 @@ export default function KleeHeroAnimation() {
       >
         <g transform="translate(50, 50)">
           <path
-            ref={redPetalRef}
             d={PETAL_PATH}
             fill="var(--ketchup-red)"
             opacity="0.92"
             transform="translate(-1, -1) rotate(-45)"
           />
           <path
-            ref={yellowPetalRef}
             d={PETAL_PATH}
             fill="var(--sunshine-yellow)"
             opacity="0.92"
             transform="translate(1, -1) rotate(45)"
           />
           <path
-            ref={bluePetalRef}
             d={PETAL_PATH}
             fill="var(--sky-blue)"
             opacity="0.92"
             transform="translate(-1, 1) rotate(-135)"
           />
           <path
-            ref={greenPetalRef}
             d={PETAL_PATH}
             fill="var(--olive-green)"
             opacity="0.92"
@@ -973,7 +926,7 @@ export default function KleeHeroAnimation() {
             tasarlıyoruz.
           </h1>
         </div>
-        <HeroFinalCardStack sectionRef={sectionRef} />
+        {!isTouch && <HeroFinalCardStack sectionRef={sectionRef} />}
       </div>
     </section>
   );

@@ -770,13 +770,19 @@ body[data-menu-open="true"] .menu-trigger-icon span:nth-child(3) {
   .klee-gallery {
     flex-direction: column;
     height: auto;
-    gap: 10px;
+    gap: 8px;
   }
 
   .klee-gallery-item {
     flex: 0 0 auto;
-    aspect-ratio: 4 / 3;
+    /* 16/9 instead of 4/3 saves ~80px per card — 5 cards × 80px = 400px less height */
+    aspect-ratio: 16 / 9;
     width: 100%;
+  }
+
+  /* Show overlay always on touch (no hover state exists) */
+  .klee-gallery-item .klee-gallery-item-overlay {
+    opacity: 1;
   }
 
   .klee-gallery-item:hover {
@@ -1447,23 +1453,23 @@ body[data-menu-open="true"] .menu-trigger-icon span:nth-child(3) {
 /* Step descriptions */
 .step-desc {
   position: absolute;
-  font-size: clamp(0.85rem, 3vw, 1.4rem);
+  font-size: clamp(1.1rem, 2.4vw, 1.85rem);
   font-weight: 400;
   color: #0f172a;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .step-desc--right {
   bottom: 15vh;
   right: 5vw;
-  max-width: min(360px, 70vw);
+  max-width: min(480px, 70vw);
   text-align: right;
 }
 
 .step-desc--left {
   bottom: 15vh;
   left: 5vw;
-  max-width: min(360px, 70vw);
+  max-width: min(480px, 70vw);
   text-align: left;
 }
 
@@ -1653,6 +1659,37 @@ body[data-menu-open="true"] .menu-trigger-icon span:nth-child(3) {
   .gallery-thumbnail-strip {
     bottom: 16px;
     gap: 4px;
+  }
+
+  /* Projects section: fixed 105vh height clips the vertically-stacked gallery */
+  .projects {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Gallery container: 70vw is too narrow for stacked vertical cards */
+  .projects-gallery-full {
+    width: 92vw;
+  }
+
+  /* WhatsApp CTA: long string overflows on narrow screens */
+  .contact-cta {
+    font-size: 1.1rem;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Menu footer: two items side-by-side overflow on small phones */
+  .menu-overlay-footer {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  /* Top-bar brand/klee height should match the shorter mobile top-bar */
+  .top-bar-brand,
+  .top-bar-klee-blend {
+    height: 52px;
   }
 }
 

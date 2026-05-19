@@ -242,12 +242,19 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 
 ## 📐 Responsive Strateji
 
-- **Tek ana breakpoint:** `767px` (`@media (max-width: 767px)`).
-- **Özel landscape mod:** `@media (max-height: 500px) and (orientation: landscape)` — yatay tutulmuş telefon/küçük tablet için.
+- **Breakpoint'ler:** `767px` (primary mobile), `768px` (genel responsive blok), `480px` (küçük ekran), `1024px` (tablet).
+- **Özel landscape mod:** `@media (max-height: 500px) and (orientation: landscape)`.
 - Tipografi `clamp(min, vw/vh, max)` ile fluid.
 - Hero animasyonunda JS tarafı da `isMobile()` / `isLandscape()` kontrol eder; CSS ile JS aynı eşik değerini kullanır.
-- Projects image-gallery — desktop'ta tek sıra `display:flex` hover-expand (5 eşit kart, hover'da `flex-grow:4`); mobil (<768px)'de tek kolon dikey stack (`aspect-ratio: 4/3`).
-- Hero final content: desktop'ta yatay (image + text yan yana), mobilde dikey (image üstte 32vh, text altta), landscape'te tekrar yatay ama kompakt.
+- **`HeroFinalCardStack` (cursor-hover invisible grid)** — touch cihazlarda (`(hover: none) and (pointer: coarse)`) tamamen devre dışı: bileşen render edilmez. Invisible grid tüm ekranı kapatır ve touch eventlarını bloklar.
+- **Hero scroll distance** — desktop: `2500vh`, mobile: `900vh` (eski `1850vh`), landscape: `700vh` (eski `1500vh`). Mobilde çok uzun scroll sorunu giderildi.
+- **Hero cornerScale** — mobile: `3.0` (eski `3.5`), landscape: `2.0` (eski `2.5`). Keyword text ile overlap azaltıldı.
+- **Projects section** — mobile'da `height: auto; min-height: 100vh` (eski `105vh` fixed + `overflow: hidden` 5 kart yığınını klipliyordu). Gallery width mobilde `92vw` (eski `70vw`).
+- **Projects GSAP pin** (500px dwell) — `window.innerWidth < 768` ise atlanır; touch scroll'da jarring hissi yoktur.
+- **Gallery cards** — mobile'da `aspect-ratio: 16/9` (eski `4/3`); 5 kart × 80px tasarruf = ~400px daha kısa sayfa. Overlay her zaman görünür (hover state yok).
+- **Contact CTA** — mobilde `font-size: 1.1rem; flex-wrap: wrap` (uzun Türkçe metin taşması giderildi).
+- **Menu overlay footer** — mobilde `flex-direction: column; align-items: flex-start`.
+- **Top-bar brand/klee-blend height** — mobilde `52px` (mobile top-bar yüksekliğiyle hizalanır).
 
 ## ⚙️ Kritik Konfigürasyonlar & Sabit Değerler
 
@@ -303,6 +310,16 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 ## 📌 Son Değişiklikler (Changelog)
 
 > Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
+
+- **[2026-05-19] Kapsamlı Responsive Overhaul — 8 farklı mobil sorunu giderildi**
+  - **`HeroFinalCardStack` touch'ta devre dışı:** `useEffect` ile `(hover: none) and (pointer: coarse)` algılanır; touch cihazlarda bileşen render edilmez. Fixed-position invisible grid tüm touch eventlarını bloke ediyordu. Dosya: [KleeHeroAnimation.js](app/components/KleeHeroAnimation.js).
+  - **Hero scroll distance azaltıldı:** Mobile `1850vh → 900vh`, landscape `1500vh → 700vh`. Kullanıcı eski değerde neredeyse 2000 ekran yüksekliği kaydırması gerekiyordu. Dosya: [KleeHeroAnimation.js:291](app/components/KleeHeroAnimation.js#L291).
+  - **Hero cornerScale küçültüldü:** Mobile `3.5 → 3.0`, landscape `2.5 → 2.0`. Keyword metniyle görsel çakışma azaltıldı. Dosya: [KleeHeroAnimation.js:269](app/components/KleeHeroAnimation.js#L269).
+  - **ProjectsSection GSAP pin mobile'da atlanıyor:** `window.innerWidth < 768` kontrolü ile 500px dwell pin touch'ta devreye girmez. Dosya: [page.js:417](app/page.js#L417).
+  - **`.projects` height fix:** `height: 105vh; overflow: hidden` → `height: auto; min-height: 100vh`. Dikey 5 kart yığını overflow'dan kurtuldu. Dosya: [globals.css](app/globals.css).
+  - **`.projects-gallery-full` width fix:** Mobile'da `70vw → 92vw`. Kart görüntüleri artık daha geniş. Dosya: [globals.css](app/globals.css).
+  - **Gallery card aspect-ratio:** Mobile'da `4/3 → 16/9`. 5 kart × ~80px tasarruf. Overlay her zaman görünür (hover yoktur). Dosya: [globals.css](app/globals.css).
+  - **Contact CTA + Menu footer polish:** CTA `font-size: 1.1rem; flex-wrap: wrap`; footer `flex-direction: column` mobilde. Top-bar brand height `52px` ile hizalandı. Dosya: [globals.css](app/globals.css).
 
 - **[2026-05-18] Galeri: overlay → gerçek Next.js route (`/projects/[slug]`) + 5 hata düzeltmesi**
   - **YENİ `app/lib/projects.js`:** `PROJECTS_GALLERY` verisi ve `getProjectBySlug(slug)` helper'ı buraya taşındı. Her projeye `slug` alanı eklendi (`luxe-commerce`, `fittrack`, `evora`, `datapulse`, `tastehub`).

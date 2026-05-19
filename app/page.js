@@ -415,6 +415,8 @@ function ProjectsSection() {
 
   useGSAP(
     () => {
+      // Dwell pin feels jarring on touch — skip it on mobile
+      if (window.innerWidth < 768) return;
       const trigger = ScrollTrigger.create({
         trigger: sectionRef.current,
         start: "top top",
