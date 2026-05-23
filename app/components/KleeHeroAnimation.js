@@ -234,6 +234,12 @@ export default function KleeHeroAnimation() {
       const isLandscape = () =>
         section.clientWidth > section.clientHeight &&
         section.clientHeight < 500;
+      // Mobile: longer hold so each keyword has reading time at 700vh
+      const holdDuration = () => {
+        if (isLandscape()) return 0.7;
+        if (isMobile()) return 1.1;
+        return 1.5;
+      };
 
       // ── Intro scale: clover starts BIG and semi-transparent ──────
       const introScale = () => {
@@ -275,29 +281,33 @@ export default function KleeHeroAnimation() {
       };
       const cornerScale = () => {
         if (isLandscape()) return 2.0;
-        return isMobile() ? 3.0 : 6;
+        // Mobile: bigger petals (~44% larger), net visible area ~45% via corner push
+        if (isMobile()) return 2.6;
+        return 6;
       };
       const cX = (side) => {
+        // Mobile: fixed at bottom-right — push further right to compensate larger size
+        if (isMobile()) return section.clientWidth * 0.34;
         let mult;
         if (isLandscape()) mult = 0.38;
-        else if (isMobile()) mult = 0.4;
         else mult = 0.5;
         return side === "left"
           ? -(section.clientWidth * mult)
           : section.clientWidth * mult;
       };
       const cY = (side) => {
+        // Mobile: top edge stays at same vertical Y as before (math: 0.26 + 112/H ≈ 0.40)
+        if (isMobile()) return section.clientHeight * 0.40;
         let mult;
         if (isLandscape()) mult = 0.36;
-        else if (isMobile()) mult = 0.42;
         else mult = 0.48;
         return side === "top"
           ? -(section.clientHeight * mult)
           : section.clientHeight * mult;
       };
       const scrollEnd = () => {
-        if (isLandscape()) return "700vh";
-        if (isMobile()) return "900vh";
+        if (isLandscape()) return "450vh";
+        if (isMobile()) return "700vh";
         return "2500vh";
       };
 
@@ -388,7 +398,9 @@ export default function KleeHeroAnimation() {
       master.to(
         clover,
         {
-          rotation: 540,
+          // Desktop: 540 (180° mod) — corner logic
+          // Mobile: 360 (0° mod) — red petal stays NW, facing screen center
+          rotation: isMobile() ? 360 : 540,
           duration: 3,
           ease: "sine.inOut",
         },
@@ -398,8 +410,8 @@ export default function KleeHeroAnimation() {
         master.to(
           glowLayer,
           {
-            "--gx": "18%",
-            "--gy": "22%",
+            // Mobile: clover is fixed bottom-right so keep glow there too
+            ...(isMobile() ? {} : { "--gx": "18%", "--gy": "22%" }),
             "--glow-color": "#D14C18",
             "--glow-opacity": "0.55",
             duration: 3,
@@ -436,7 +448,7 @@ export default function KleeHeroAnimation() {
         { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
         "step1+=1.5",
       );
-      master.to({}, { duration: 1.5 }, "step1-hold");
+      master.to({}, { duration: holdDuration() }, "step1-hold");
 
       // ── Transition 1→2 ───────────────────────────────────────────────
       master.to(
@@ -471,6 +483,8 @@ export default function KleeHeroAnimation() {
       master.to(
         clover,
         {
+          // Desktop: 900 (180° mod) — green petal corner logic
+          // Mobile: 900 (180° mod) — green petal NW ✓ (same value, both correct)
           rotation: 900,
           duration: 3,
           ease: "sine.inOut",
@@ -481,8 +495,7 @@ export default function KleeHeroAnimation() {
         master.to(
           glowLayer,
           {
-            "--gx": "82%",
-            "--gy": "78%",
+            ...(isMobile() ? {} : { "--gx": "82%", "--gy": "78%" }),
             "--glow-color": "#B2AB2B",
             "--glow-opacity": "0.55",
             duration: 3,
@@ -519,7 +532,7 @@ export default function KleeHeroAnimation() {
         { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
         "step2+=1.5",
       );
-      master.to({}, { duration: 1.5 }, "step2-hold");
+      master.to({}, { duration: holdDuration() }, "step2-hold");
 
       // ── Transition 2→3 ───────────────────────────────────────────────
       master.to(
@@ -554,7 +567,9 @@ export default function KleeHeroAnimation() {
       master.to(
         clover,
         {
-          rotation: 1260,
+          // Desktop: 1260 (180° mod) — blue petal corner logic
+          // Mobile: 1530 (90° mod) — blue petal NW ✓
+          rotation: isMobile() ? 1530 : 1260,
           duration: 3,
           ease: "sine.inOut",
         },
@@ -564,8 +579,7 @@ export default function KleeHeroAnimation() {
         master.to(
           glowLayer,
           {
-            "--gx": "18%",
-            "--gy": "78%",
+            ...(isMobile() ? {} : { "--gx": "18%", "--gy": "78%" }),
             "--glow-color": "#7C9DD2",
             "--glow-opacity": "0.55",
             duration: 3,
@@ -602,7 +616,7 @@ export default function KleeHeroAnimation() {
         { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
         "step3+=1.5",
       );
-      master.to({}, { duration: 1.5 }, "step3-hold");
+      master.to({}, { duration: holdDuration() }, "step3-hold");
 
       // ── Transition 3→4 ───────────────────────────────────────────────
       master.to(
@@ -637,7 +651,9 @@ export default function KleeHeroAnimation() {
       master.to(
         clover,
         {
-          rotation: 1620,
+          // Desktop: 1620 (180° mod) — yellow petal corner logic
+          // Mobile: 2070 (270° mod) — yellow petal NW ✓
+          rotation: isMobile() ? 2070 : 1620,
           duration: 3,
           ease: "sine.inOut",
         },
@@ -647,8 +663,7 @@ export default function KleeHeroAnimation() {
         master.to(
           glowLayer,
           {
-            "--gx": "82%",
-            "--gy": "22%",
+            ...(isMobile() ? {} : { "--gx": "82%", "--gy": "22%" }),
             "--glow-color": "#F4D68C",
             "--glow-opacity": "0.6",
             duration: 3,
@@ -685,7 +700,7 @@ export default function KleeHeroAnimation() {
         { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
         "step4+=1.5",
       );
-      master.to({}, { duration: 1.5 }, "step4-hold");
+      master.to({}, { duration: holdDuration() }, "step4-hold");
 
       // ── Phase 5: Converge to top-bar clover logo (top center) ────────
       const navLogoNode = document.querySelector(".navbar-clover-logo");
@@ -724,7 +739,9 @@ export default function KleeHeroAnimation() {
           x: getNavX,
           y: getNavY,
           scale: 28 / 280,
-          rotation: 1980,
+          // Mobile: 2430 (continues from 2070, one final spin)
+          // Desktop: 1980 (continues from 1620)
+          rotation: isMobile() ? 2430 : 1980,
           duration: 1.2,
           ease: "expo.out",
         },
@@ -863,7 +880,8 @@ export default function KleeHeroAnimation() {
         {/* Step 1: TUTKU — keyword top-left, desc bottom-right */}
         <div ref={step1Ref} style={{ position: "absolute", inset: 0 }}>
           <h2 className="hero-keyword" style={{ top: "10vh", left: "5vw" }}>
-            <SplitTextChars text="TUTKU" />
+            <span className="hk-syl"><SplitTextChars text="TUT" /></span>
+            <span className="hk-syl"><SplitTextChars text="KU" /></span>
           </h2>
           <div
             className="step-desc step-desc--right"
@@ -876,7 +894,8 @@ export default function KleeHeroAnimation() {
         {/* Step 2: TILSIM — keyword bottom-right, desc bottom-left */}
         <div ref={step2Ref} style={{ position: "absolute", inset: 0 }}>
           <h2 className="hero-keyword" style={{ bottom: "10vh", right: "5vw" }}>
-            <SplitTextChars text="TILSIM" />
+            <span className="hk-syl"><SplitTextChars text="TIL" /></span>
+            <span className="hk-syl"><SplitTextChars text="SIM" /></span>
           </h2>
           <div
             className="step-desc step-desc--left"
@@ -889,7 +908,8 @@ export default function KleeHeroAnimation() {
         {/* Step 3: VİZYON — keyword bottom-left, desc bottom-right */}
         <div ref={step3Ref} style={{ position: "absolute", inset: 0 }}>
           <h2 className="hero-keyword" style={{ bottom: "10vh", left: "5vw" }}>
-            <SplitTextChars text="VİZYON" />
+            <span className="hk-syl"><SplitTextChars text="VİZ" /></span>
+            <span className="hk-syl"><SplitTextChars text="YON" /></span>
           </h2>
           <div
             className="step-desc step-desc--right"
@@ -902,7 +922,9 @@ export default function KleeHeroAnimation() {
         {/* Step 4: KIVILCIM — keyword top-right, desc bottom-left */}
         <div ref={step4Ref} style={{ position: "absolute", inset: 0 }}>
           <h2 className="hero-keyword" style={{ top: "10vh", right: "5vw" }}>
-            <SplitTextChars text="KIVILCIM" />
+            <span className="hk-syl"><SplitTextChars text="KI" /></span>
+            <span className="hk-syl"><SplitTextChars text="VIL" /></span>
+            <span className="hk-syl"><SplitTextChars text="CIM" /></span>
           </h2>
           <div
             className="step-desc step-desc--left"

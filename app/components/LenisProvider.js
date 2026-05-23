@@ -12,6 +12,8 @@ export default function LenisProvider({ children }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Touch cihazlarda Lenis hiç init etmesin — native scroll + ticker yükü yok
+    if (window.matchMedia("(hover: none) and (pointer: coarse)").matches) return;
     // Horizon ve projects sayfalarında Lenis kapalı
     if (pathname.startsWith("/horizon") || pathname.startsWith("/projects")) return;
 

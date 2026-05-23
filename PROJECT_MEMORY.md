@@ -311,6 +311,48 @@ Yonca SVG'de 4 yaprak ref'lenmiş: `redPetalRef` / `yellowPetalRef` / `bluePetal
 
 > Tarihler **2026** yılındadır (proje takvimi). Her commit/değişiklik buraya eklenecek — AI her yaptığı değişiklikten sonra ilgili bölümle birlikte bu listeyi de günceller.
 
+- **[2026-05-23] Mobil & Desktop UI Polish — 5 düzeltme + galeri iyileştirmesi**
+  - **Projects mobil arka plan ([globals.css](app/globals.css)):** Mobilde sarı-beyaz gradient yerine koyu gradient (`#0a0a0a → #111111 → #1a1610`) uygulandı. `.projects-clover-bg` SVG pattern mobilde `opacity: 0` ile gizlendi.
+  - **Hakkımızda panelleri kelime kırılması fix ([globals.css](app/globals.css), [page.js](app/page.js)):** `.story-panel-heading` mobilde `overflow-wrap: normal`, `word-break: normal`, `hyphens: none` — kelimeler artık ortalarından bölünmüyor. Font-size `clamp(2rem, 11vw, 4.5rem)` → `clamp(1.8rem, 9vw, 3.5rem)` ile küçültüldü. `.klee-flow-inner` mobilde `justify-content: center` + `gap: clamp(1rem, 3vw, 2rem)` — orta alan bomboş kalmıyor, içerik dikeyde toplanıyor. JSX'te `<br />` öncelerine `{" "}` eklendi — `display: none` yapıldığında kelimeler yapışmıyor.
+  - **Hero "KIVILCIM" mobilde tek satır ([globals.css](app/globals.css)):** `.hero-keyword` mobil font-size `clamp(3.5rem, 21vw, 9rem)` → `clamp(2.8rem, 17vw, 7rem)`, `white-space: nowrap` eklendi. 8 karakterlik KIVILCIM artık 375px ekranda tek satıra sığıyor.
+  - **RandomLetterSwap ghost harf fix ([RandomLetterSwap.js](app/components/RandomLetterSwap.js)):** `LETTER_CELL_STYLE`'a `height: "1.2em"` ve `lineHeight: "1.2"` eklendi (eski: `lineHeight: "inherit"`). Ghost harfler artık `overflow: hidden` tarafından kesin olarak klipleniyor, hover öncesi görünmüyor.
+  - **Seçilmiş Çalışmalar desktop galeri iyileştirmesi ([globals.css](app/globals.css)):** Zigzag vertical offset (odd: `translateY(14px)`, even: `translateY(-14px)`) + grayscale dim (`grayscale(25%) brightness(0.78)`) eklendi. Hover'da kart düzleşir + full brightness. Mobilde zigzag/grayscale kaldırıldı (grid layout ile uyumsuz). Dosyalar: [globals.css](app/globals.css), [page.js](app/page.js), [RandomLetterSwap.js](app/components/RandomLetterSwap.js).
+
+- **[2026-05-23] Hero Keyword Heceleme + Yonca Büyütme + Projects Pin Fix**
+  - **Hero keyword heceleme ([KleeHeroAnimation.js](app/components/KleeHeroAnimation.js)):** Her keyword `<span className="hk-syl">` bloklarına ayrıldı. TUTKU→TUT/KU, TILSIM→TIL/SIM, VİZYON→VİZ/YON, KIVILCIM→KI/VIL/CIM. CSS `globals.css`: desktop `.hk-syl { display: inline }`, mobile `display: block; line-height: 0.83`. Mobile font `clamp(3.5rem, 22vw, 9.5rem)`, top `5vh`.
+  - **Yonca büyütme ([KleeHeroAnimation.js](app/components/KleeHeroAnimation.js)):** Mobile `cornerScale: 1.8 → 2.6` (yapraklar %44 büyük). `cX: 0.28 → 0.34`, `cY: 0.26 → 0.40` (math: üst kenar aynı Y'de kalır). Net visible area ~%45, pasif yapraklar kadrajdan çıkar.
+  - **Projects pin fit ([globals.css](app/globals.css)):** `.projects { padding: 60px 0 }`. `.klee-gallery { height: 55vh }`. Pin süresinde galeri tümüyle viewport'a sığar, alt kesik yok.
+
+- **[2026-05-23] Mobile Hero Petal Rotation + Projects Magazine Layout**
+  - **Hero yaprak yönü ([KleeHeroAnimation.js](app/components/KleeHeroAnimation.js)):** Mobile'da yonca sağ-alt sabit, aktif yaprak her step'te NW (ekran merkezi) yönüne bakacak şekilde rotation değerleri yeniden hesaplandı. SVG petal layout: red=NW, yellow=NE, blue=SW, green=SE @rot=0. Hedef mod360: red=0, green=180, blue=90, yellow=270. Yeni mobile rotasyonlar: step1=360, step2=900, step3=1530, step4=2070, converge=2430. Hız adımlar arası değişir, süre sabit 3s. Dosya: [KleeHeroAnimation.js](app/components/KleeHeroAnimation.js).
+  - **Projects magazine layout ([ImageGallery.js](app/components/ImageGallery.js), [projects.js](app/lib/projects.js), [globals.css](app/globals.css)):**
+    - `PROJECTS_GALLERY[0]` (Luxe Commerce) `featured: true` aldı.
+    - `ImageGallery` component: `data-featured` attribute, `is-{tagClass}` className, tag `— {item.tag}` formatına geçti.
+    - CSS mobile: featured kart tam genişlik 1:1, alttan gradient overlay, Cormorant italic tag (marka rengi), Outfit bold beyaz title; mini kartlar 4:3 Cormorant italic tag (krem), Outfit 0.92rem beyaz title.
+
+- **[2026-05-23] Mobile UI Overhaul — Hero fixed clover + Projects 2-col grid + Story panel taşma fix**
+  - **Hero mobile branch ([KleeHeroAnimation.js](app/components/KleeHeroAnimation.js)):**
+    - `cX`/`cY`: Mobile'da tüm step'ler aynı sabit sağ-alt pozisyon (`0.28 × width, 0.26 × height`). Köşeden köşeye gezme yok.
+    - `cornerScale` mobile: `3.0 → 1.8` (büyük ama %45 ekran, kenar kırpık).
+    - `scrollEnd` mobile: `550vh → 700vh` (her keyword için okuma vakti).
+    - `holdDuration` mobile: `0.7 → 1.1`.
+    - Glow layer tweens: mobile'da `--gx`/`--gy` sabit (sadece renk değişir), konum değişmez.
+    - CSS (`globals.css`): `.hero-glow-layer` mobile → `circle at 78% 78%` sabit.
+  - **Keyword tipografi ([globals.css](app/globals.css)):**
+    - `.hero-keyword` mobile: `top: 8vh; left: 50%; transform: translateX(-50%)` (`!important` ile inline style override). `font-size: clamp(3.5rem, 21vw, 9rem)`. 75-85vw dramatik etki.
+  - **Projects 2-column grid ([globals.css](app/globals.css)):**
+    - `.klee-gallery` mobile: `display: grid; grid-template-columns: 1fr 1fr; gap: 12px`. Dikey listeden çıkış.
+    - `.klee-gallery-item` mobile: `flex: none; display: flex; flex-direction: column; overflow: visible`. Düz kart yapısı.
+    - `.klee-gallery-item-img` mobile: `position: relative; aspect-ratio: 1/1; border-radius: 8px`. Kare thumbnail.
+    - `.klee-gallery-item-overlay` mobile: `position: static; background: none`. Gradient overlay yerine altındaki bilgi bloğu.
+    - `.klee-gallery-item-tag`: Üstte küçük caps. `.klee-gallery-item-title`: Altında Outfit bold, `var(--gray-900)`.
+  - **Story panel taşma fix ([globals.css](app/globals.css)):**
+    - `.story-panel-heading br { display: none }` mobile'da — doğal kelime akışı.
+    - `font-size: clamp(2rem, 11vw, 4.5rem)`, `overflow-wrap: anywhere`, `hyphens: auto`.
+    - `.klee-flow-inner` mobile padding kompaktlaştı.
+    - `.step-desc` mobile: `padding-right: 40vw` ile sabit yoncadan uzak.
+  - **Dosyalar:** [KleeHeroAnimation.js](app/components/KleeHeroAnimation.js), [globals.css](app/globals.css).
+
 - **[2026-05-19] Kapsamlı Responsive Overhaul — 8 farklı mobil sorunu giderildi**
   - **`HeroFinalCardStack` touch'ta devre dışı:** `useEffect` ile `(hover: none) and (pointer: coarse)` algılanır; touch cihazlarda bileşen render edilmez. Fixed-position invisible grid tüm touch eventlarını bloke ediyordu. Dosya: [KleeHeroAnimation.js](app/components/KleeHeroAnimation.js).
   - **Hero scroll distance azaltıldı:** Mobile `1850vh → 900vh`, landscape `1500vh → 700vh`. Kullanıcı eski değerde neredeyse 2000 ekran yüksekliği kaydırması gerekiyordu. Dosya: [KleeHeroAnimation.js:291](app/components/KleeHeroAnimation.js#L291).

@@ -13,6 +13,7 @@ export const PROJECTS_GALLERY = [
     tagClass: "tag-blue",
     title: "Luxe Commerce",
     desc: "Premium e-ticaret platformu — modern alışveriş deneyimi.",
+    featured: true,
   },
   {
     slug: "fittrack",

@@ -341,9 +341,9 @@ function StoryBridgeAll() {
           <hr className="story-panel-divider" />
           <div>
             <h2 className="story-panel-heading">
-              Öğrenciler
+              Öğrenciler{" "}
               <br />
-              Tarafından
+              Tarafından{" "}
               <br />
               Kurulan
             </h2>
@@ -365,9 +365,9 @@ function StoryBridgeAll() {
           <hr className="story-panel-divider" />
           <div>
             <h2 className="story-panel-heading">
-              Hayallerimiz
+              Hayallerimiz{" "}
               <br />
-              Sayesinde
+              Sayesinde{" "}
               <br />
               Şekillenen
             </h2>
@@ -388,16 +388,16 @@ function StoryBridgeAll() {
           <hr className="story-panel-divider" />
           <div>
             <h2 className="story-panel-heading">
-              Ankara
+              Ankara{" "}
               <br />
-              Merkezli Bir
+              Merkezli Bir{" "}
               <br />
               Oluşumuz
             </h2>
           </div>
           <hr className="story-panel-divider" />
           <p className="story-panel-body-right">
-            Ankara'dan dünyaya uzanan bağlantılarla, coğrafi sınırları aşan
+            Ankara&apos;dan dünyaya uzanan bağlantılarla, coğrafi sınırları aşan
             projeler üretiyoruz...
           </p>
         </FlowSection>

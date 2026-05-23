@@ -123,51 +123,50 @@ export default function GalleryModal({
         </button>
       )}
 
-      {/* Back button — bottom left */}
-      <button
-        className="gallery-back-btn"
-        onClick={onClose}
-        aria-label="Geri dön"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
-        <RandomLetterSwapPingPong label="Geri dön" staggerDuration={0.022} />
-      </button>
+      {/* Bottom bar: back | thumbnails | info */}
+      <div className="gallery-bottom-bar" onClick={(e) => e.stopPropagation()}>
+        <button
+          className="gallery-back-btn"
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          aria-label="Geri dön"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          <RandomLetterSwapPingPong label="Geri" staggerDuration={0.022} />
+        </button>
 
-      {/* Project info button — bottom right */}
-      <button
-        className={`gallery-info-btn ${infoPanelOpen ? "active" : ""}`}
-        onClick={() => setInfoPanelOpen((v) => !v)}
-        aria-label="Proje bilgisi"
-        aria-expanded={infoPanelOpen}
-      >
-        <svg viewBox="0 0 18 11" width="18" height="11" fill="none" aria-hidden="true">
-          <rect y="0" width="18" height="1.5" rx="0.75" fill="currentColor" />
-          <rect y="4.75" width="18" height="1.5" rx="0.75" fill="currentColor" />
-          <rect y="9.5" width="18" height="1.5" rx="0.75" fill="currentColor" />
-        </svg>
-        <RandomLetterSwapPingPong label="Proje bilgisi" staggerDuration={0.018} />
-      </button>
+        <div className="gallery-thumbnail-strip">
+          {images.map((src, idx) => (
+            <button
+              key={idx}
+              className={`gallery-thumbnail ${currentIndex === idx ? "active" : ""}`}
+              onClick={() => goTo(idx)}
+              aria-label={`${projectInfo.title} ${idx + 1}`}
+            >
+              <Image
+                src={src}
+                alt={`${projectInfo.title} küçük resim ${idx + 1}`}
+                fill
+                style={{ objectFit: "cover" }}
+                sizes="56px"
+              />
+            </button>
+          ))}
+        </div>
 
-      {/* Thumbnail strip — bottom center */}
-      <div className="gallery-thumbnail-strip">
-        {images.map((src, idx) => (
-          <button
-            key={idx}
-            className={`gallery-thumbnail ${currentIndex === idx ? "active" : ""}`}
-            onClick={() => goTo(idx)}
-            aria-label={`${projectInfo.title} ${idx + 1}`}
-          >
-            <Image
-              src={src}
-              alt={`${projectInfo.title} küçük resim ${idx + 1}`}
-              fill
-              style={{ objectFit: "cover" }}
-              sizes="80px"
-            />
-          </button>
-        ))}
+        <button
+          className={`gallery-info-btn ${infoPanelOpen ? "active" : ""}`}
+          onClick={(e) => { e.stopPropagation(); setInfoPanelOpen((v) => !v); }}
+          aria-label="Proje bilgisi"
+          aria-expanded={infoPanelOpen}
+        >
+          <RandomLetterSwapPingPong label="Bilgi" staggerDuration={0.018} />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
+            <path d="M13 16h-1v-4h-1m1-4h.01" />
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        </button>
       </div>
 
       {/* Right slide-out: Project info panel */}

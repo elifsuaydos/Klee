@@ -2,6 +2,7 @@
 
 import { useRef, useCallback } from "react";
 import gsap from "gsap";
+import { useIsTouch } from "../lib/useIsTouch";
 
 /* ─────────────────────────────────────────────
    Shared styles (vanilla, no Tailwind)
@@ -18,7 +19,8 @@ const LETTER_CELL_STYLE = {
   overflow: "hidden",
   whiteSpace: "pre",
   verticalAlign: "top",
-  lineHeight: "inherit",
+  lineHeight: "1.2",
+  height: "1.2em",
 };
 
 const PRIMARY_STYLE = {
@@ -163,6 +165,7 @@ export function RandomLetterSwapPingPong({
   style,
   onClick,
 }) {
+  const isTouch = useIsTouch();
   const { scopeRef, animateIn, animateOut } = useLetterSwap({
     label,
     reverse,
@@ -170,6 +173,15 @@ export function RandomLetterSwapPingPong({
     stagger: staggerDuration,
     pingPong: true,
   });
+
+  // Touch: render static text — no GSAP timelines, no refs overhead
+  if (isTouch) {
+    return (
+      <span className={className} style={{ ...WRAPPER_STYLE, ...style }} onClick={onClick}>
+        {label}
+      </span>
+    );
+  }
 
   return (
     <span
@@ -198,6 +210,7 @@ export function RandomLetterSwapForward({
   style,
   onClick,
 }) {
+  const isTouch = useIsTouch();
   const { scopeRef, animateIn } = useLetterSwap({
     label,
     reverse,
@@ -205,6 +218,14 @@ export function RandomLetterSwapForward({
     stagger: staggerDuration,
     pingPong: false,
   });
+
+  if (isTouch) {
+    return (
+      <span className={className} style={{ ...WRAPPER_STYLE, ...style }} onClick={onClick}>
+        {label}
+      </span>
+    );
+  }
 
   return (
     <span

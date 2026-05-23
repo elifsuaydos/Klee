@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { useIsTouch } from '../lib/useIsTouch';
 
 export const PREVIEW_DATA = {
   tasarim: {
@@ -62,34 +63,37 @@ function PreviewCard({ cardRef }) {
 
 export function HoverLink({ previewKey, children }) {
   const ctx = useContext(HoverPreviewContext);
-  const { setActiveKey, setPosition, setIsVisible } = ctx || {};
+  const isTouch = useIsTouch();
+  const { activeKey, setActiveKey, setPosition, setIsVisible, isVisible } = ctx || {};
 
-  const updatePosition = useCallback((e) => {
+  // Position the card near the touch/click point, with viewport clamping
+  const updatePosition = useCallback((clientX, clientY) => {
     if (!setPosition) return;
     const cardWidth = 300;
     const cardHeight = 240;
     const offsetY = 20;
 
-    let x = e.clientX - cardWidth / 2;
-    let y = e.clientY - cardHeight - offsetY;
+    let x = clientX - cardWidth / 2;
+    let y = clientY - cardHeight - offsetY;
 
     if (x + cardWidth > window.innerWidth - 20) x = window.innerWidth - cardWidth - 20;
     if (x < 20) x = 20;
-    if (y < 20) y = e.clientY + offsetY;
+    if (y < 20) y = clientY + offsetY;
 
     setPosition({ x, y });
   }, [setPosition]);
 
+  // Mouse handlers (desktop only)
   const handleEnter = useCallback((e) => {
     if (!setActiveKey) return;
     setActiveKey(previewKey);
     setIsVisible(true);
-    updatePosition(e);
+    updatePosition(e.clientX, e.clientY);
   }, [previewKey, setActiveKey, setIsVisible, updatePosition]);
 
   const handleMove = useCallback((e) => {
     if (!setIsVisible) return;
-    setIsVisible((v) => { if (v) updatePosition(e); return v; });
+    setIsVisible((v) => { if (v) updatePosition(e.clientX, e.clientY); return v; });
   }, [updatePosition, setIsVisible]);
 
   const handleLeave = useCallback(() => {
@@ -97,14 +101,41 @@ export function HoverLink({ previewKey, children }) {
     setIsVisible(false);
   }, [setIsVisible]);
 
+  // Tap handler (touch only): toggle — tap same link again to close
+  const handleTap = useCallback((e) => {
+    if (!isTouch || !setActiveKey) return;
+    e.preventDefault();
+    const touch = e.changedTouches?.[0] || e;
+    if (activeKey === previewKey && isVisible) {
+      setIsVisible(false);
+    } else {
+      setActiveKey(previewKey);
+      setIsVisible(true);
+      updatePosition(touch.clientX, touch.clientY);
+    }
+  }, [isTouch, activeKey, previewKey, isVisible, setActiveKey, setIsVisible, updatePosition]);
+
+  // Close when tapping outside on touch devices
+  useEffect(() => {
+    if (!isTouch || !isVisible) return;
+    const close = (e) => {
+      if (!e.target.closest('.klee-hover-link')) {
+        setIsVisible(false);
+      }
+    };
+    document.addEventListener('touchstart', close, { passive: true });
+    return () => document.removeEventListener('touchstart', close);
+  }, [isTouch, isVisible, setIsVisible]);
+
   if (!ctx) return <span>{children}</span>;
 
   return (
     <span
       className="klee-hover-link"
-      onMouseEnter={handleEnter}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
+      onMouseEnter={!isTouch ? handleEnter : undefined}
+      onMouseMove={!isTouch ? handleMove : undefined}
+      onMouseLeave={!isTouch ? handleLeave : undefined}
+      onClick={isTouch ? handleTap : undefined}
     >
       {children}
     </span>

@@ -4,7 +4,8 @@
       "WebSearch",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\kgn\\\\Desktop\\\\Klee-main\" -Recurse -File -Name)",
       "Bash(Select-Object -First 50)",
-      "WebFetch(domain:fonts.google.com)"
+      "WebFetch(domain:fonts.google.com)",
+      "Bash(powershell -Command \"Get-Content 'c:\\\\Users\\\\kgn\\\\Desktop\\\\Klee-main\\\\app\\\\page.js' | Select-String 'about' | Select-Object -First 20\")"
     ]
   }
 }
